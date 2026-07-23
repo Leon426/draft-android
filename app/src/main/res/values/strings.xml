@@ -16,4 +16,6 @@
     <string name="sync_in_progress">Syncing...</string>
     <string name="sync_error">Sync Failed</string>
     <string name="delete_note">Delete Note</string>
+    <string name="tab_drafts">Drafts</string>
+    <string name="tab_settings">Settings</string>
 </resources>

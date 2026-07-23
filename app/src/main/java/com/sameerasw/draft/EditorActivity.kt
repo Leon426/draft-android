@@ -9,9 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -26,8 +23,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.sameerasw.draft.R
 import com.sameerasw.draft.ui.theme.DraftTheme
 import com.sameerasw.draft.viewmodel.NoteEditorViewModel
 
@@ -84,12 +83,18 @@ fun NoteEditorScreen(
                 title = { Text(title.ifBlank { stringResource(R.string.editor_untitled) }) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            painter = painterResource(id = R.drawable.rounded_arrow_back_24),
+                            contentDescription = "Back"
+                        )
                     }
                 },
                 actions = {
                     IconButton(onClick = { viewModel.deleteCurrentNote { onBack() } }) {
-                        Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete_note))
+                        Icon(
+                            painter = painterResource(id = R.drawable.rounded_delete_24),
+                            contentDescription = stringResource(R.string.delete_note)
+                        )
                     }
                 }
             )
