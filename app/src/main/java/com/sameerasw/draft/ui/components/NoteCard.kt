@@ -51,7 +51,7 @@ fun NoteCard(
 //                contentAlignment = Alignment.Center
 //            ) {
 //                Icon(
-//                    painter = painterResource(id = R.drawable.rounded_home_24),
+//                    painter = painterResource(id = R.drawable.rounded_sticky_note_2_24),
 //                    contentDescription = title,
 //                    modifier = Modifier.size(24.dp),
 //                    tint = ColorUtil.getVibrantColorFor(title)

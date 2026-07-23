@@ -63,6 +63,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
@@ -147,6 +148,8 @@ fun NoteListScreen(
         end = 16.dp
     )
 
+    var showAboutSheet by remember { mutableStateOf(false) }
+
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -165,7 +168,7 @@ fun NoteListScreen(
                     selectedIndex = pagerState.currentPage,
                     items = listOf(
                         com.sameerasw.draft.ui.components.toolbar.ToolbarItem(
-                            iconRes = R.drawable.rounded_home_24,
+                            iconRes = R.drawable.rounded_sticky_note_2_24,
                             labelRes = R.string.tab_drafts,
                             onClick = {
                                 scope.launch {
@@ -185,7 +188,7 @@ fun NoteListScreen(
                     ),
                     scrollBehavior = exitAlwaysScrollBehavior,
                     floatingActionButton = {
-                        if (isConfigured && pagerState.currentPage == 0) {
+                        if (pagerState.currentPage == 0 && isConfigured) {
                             FloatingActionButton(
                                 onClick = {
                                     viewModel.createNote { newNote ->
@@ -202,6 +205,21 @@ fun NoteListScreen(
                                     contentDescription = stringResource(R.string.note_new_button)
                                 )
                             }
+                        } else if (pagerState.currentPage == 1) {
+                            FloatingActionButton(
+                                onClick = {
+                                    showAboutSheet = true
+                                },
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                shape = MaterialTheme.shapes.large,
+                                elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.rounded_info_24),
+                                    contentDescription = "About"
+                                )
+                            }
                         }
                     }
                 )
@@ -216,19 +234,42 @@ fun NoteListScreen(
                                 isRefreshing = isRefreshing,
                                 onRefresh = { viewModel.syncNow() },
                                 state = pullToRefreshState,
-                                modifier = Modifier.fillMaxSize(),
                                 indicator = {
-                                    if (isRefreshing) {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(top = statusBarHeight + 16.dp),
-                                            contentAlignment = Alignment.TopCenter
-                                        ) {
-                                            LoadingIndicator()
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(top = statusBarHeight + 16.dp),
+                                        contentAlignment = Alignment.TopCenter
+                                    ) {
+                                        val scale = if (isRefreshing) 1f else pullToRefreshState.distanceFraction.coerceIn(0f, 1f)
+                                        if (scale > 0f) {
+                                            androidx.compose.material3.Card(
+                                                shape = androidx.compose.foundation.shape.CircleShape,
+                                                colors = androidx.compose.material3.CardDefaults.cardColors(
+                                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                                                ),
+                                                elevation = androidx.compose.material3.CardDefaults.cardElevation(defaultElevation = 6.dp),
+                                                modifier = Modifier
+                                                    .size(48.dp)
+                                                    .graphicsLayer {
+                                                        scaleX = scale
+                                                        scaleY = scale
+                                                        alpha = scale
+                                                    }
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier.fillMaxSize(),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    LoadingIndicator(
+                                                        modifier = Modifier.size(36.dp)
+                                                    )
+                                                }
+                                            }
                                         }
                                     }
-                                }
+                                },
+                                modifier = Modifier.fillMaxSize()
                             ) {
                                 if (notes.isEmpty()) {
                                     Box(
@@ -282,6 +323,12 @@ fun NoteListScreen(
                 }
             }
         }
+    }
+
+    if (showAboutSheet) {
+        com.sameerasw.draft.ui.components.sheets.AboutBottomSheet(
+            onDismissRequest = { showAboutSheet = false }
+        )
     }
 }
 
