@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.relocation.BringIntoViewRequester
@@ -194,14 +195,17 @@ fun NoteEditorScreen(
                     }
                 )
 
+                val isKeyboardOpen = WindowInsets.ime.asPaddingValues().calculateBottomPadding() > 0.dp
+
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .imePadding()
                         .progressiveBlur(
-                            blurRadius = if (isBlurEnabled) 40f else 0f,
+                            blurRadius = if (isBlurEnabled && !isKeyboardOpen) 40f else 0f,
                             height = with(androidx.compose.ui.platform.LocalDensity.current) { 130.dp.toPx() },
-                            direction = com.sameerasw.draft.ui.modifiers.BlurDirection.BOTTOM
+                            direction = com.sameerasw.draft.ui.modifiers.BlurDirection.BOTTOM,
+                            showGradientOverlay = !isKeyboardOpen
                         )
                         .verticalScroll(scrollState)
                         .padding(top = statusBarHeight, bottom = 400.dp, start = 16.dp, end = 16.dp)
