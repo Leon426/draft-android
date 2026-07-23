@@ -110,10 +110,12 @@ class NoteRepository(private val gitSyncManager: GitSyncManager) {
                     }
                 }
 
-                Note(id = id, title = title, body = body, updatedAt = updatedAt, filePath = file.absolutePath)
+                val isUnsynced = gitSyncManager.isFileUnsynced(file.absolutePath)
+                Note(id = id, title = title, body = body, updatedAt = updatedAt, filePath = file.absolutePath, isUnsynced = isUnsynced)
             } else {
                 val title = file.nameWithoutExtension
-                Note(id = UUID.randomUUID().toString(), title = title, body = content, updatedAt = file.lastModified() / 1000, filePath = file.absolutePath)
+                val isUnsynced = gitSyncManager.isFileUnsynced(file.absolutePath)
+                Note(id = UUID.randomUUID().toString(), title = title, body = content, updatedAt = file.lastModified() / 1000, filePath = file.absolutePath, isUnsynced = isUnsynced)
             }
         } catch (e: Exception) {
             null

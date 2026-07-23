@@ -77,6 +77,7 @@ class NoteEditorViewModel(application: Application) : AndroidViewModel(applicati
     fun saveCurrentNote() {
         if (isDeleted) return
         val note = _currentNote.value ?: return
+        if (note.title == _title.value && note.body == _body.value) return
         viewModelScope.launch(Dispatchers.IO) {
             noteRepository.saveNote(note, _title.value, _body.value)
         }
@@ -90,7 +91,9 @@ class NoteEditorViewModel(application: Application) : AndroidViewModel(applicati
         onComplete()
         if (note != null) {
             viewModelScope.launch(Dispatchers.IO) {
-                noteRepository.saveNote(note, titleVal, bodyVal)
+                if (note.title != titleVal || note.body != bodyVal) {
+                    noteRepository.saveNote(note, titleVal, bodyVal)
+                }
                 gitSyncManager.sync()
             }
         }

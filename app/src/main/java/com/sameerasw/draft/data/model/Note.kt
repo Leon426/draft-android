@@ -5,5 +5,6 @@ data class Note(
     val title: String,
     val body: String,
     val updatedAt: Long,
-    val filePath: String
+    val filePath: String,
+    val isUnsynced: Boolean = false
 )

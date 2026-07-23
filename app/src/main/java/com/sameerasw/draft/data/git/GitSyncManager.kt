@@ -75,11 +75,11 @@ class GitSyncManager(private val context: Context) {
             val authorName = getAuthorName()
             val authorEmail = getAuthorEmail()
 
-            // 1. Stage both new/modified files and deleted files
+            // 1. Stage all changes (modifications & deletions)
             git.add().addFilepattern(".").call()
             git.add().addFilepattern(".").setUpdate(true).call()
 
-            // 2. Commit if there are changes
+            // 2. Commit local changes if any
             val status = git.status().call()
             if (!status.isClean) {
                 git.commit()
@@ -89,64 +89,52 @@ class GitSyncManager(private val context: Context) {
                     .call()
             }
 
-            // 3. Pull rebase
+            // 3. Pull rebase to pull and integrate remote changes first
             try {
-                val pullResult = git.pull()
+                git.pull()
                     .setRebase(true)
                     .setCredentialsProvider(credentials)
                     .call()
-
-                if (!pullResult.isSuccessful || pullResult.rebaseResult?.status == RebaseResult.Status.STOPPED) {
-                    handleConflict(git, credentials, authorName, authorEmail)
-                }
-            } catch (e: Exception) {
-                handleConflict(git, credentials, authorName, authorEmail)
+            } catch (_: Exception) {
+                // If rebase fails due to conflict, abort rebase
+                try {
+                    git.rebase().setOperation(org.eclipse.jgit.api.RebaseCommand.Operation.ABORT).call()
+                } catch (_: Exception) {}
             }
 
-            // 4. Push
-            git.push()
-                .setCredentialsProvider(credentials)
-                .call()
+            // 4. Push local commits to remote; fallback to fetch & hard reset if rejected
+            try {
+                git.push()
+                    .setCredentialsProvider(credentials)
+                    .call()
+            } catch (_: Exception) {
+                git.fetch()
+                    .setCredentialsProvider(credentials)
+                    .call()
+                git.reset()
+                    .setMode(org.eclipse.jgit.api.ResetCommand.ResetType.HARD)
+                    .setRef("origin/main")
+                    .call()
+            }
 
             git.close()
         }
     }
 
-    private fun handleConflict(
-        git: Git,
-        credentials: UsernamePasswordCredentialsProvider,
-        authorName: String,
-        authorEmail: String
-    ) {
-        try {
-            git.rebase().setOperation(org.eclipse.jgit.api.RebaseCommand.Operation.ABORT).call()
-        } catch (_: Exception) {}
-
-        val timestamp = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date())
-        val statusBeforeReset = git.status().call()
-
-        for (file in localRepoDir.listFiles { f -> f.isFile && f.name.endsWith(".md") } ?: emptyArray()) {
-            if (statusBeforeReset.uncommittedChanges.contains(file.name) || statusBeforeReset.modified.contains(file.name) || statusBeforeReset.conflicting.contains(file.name)) {
-                val conflictName = "${file.nameWithoutExtension} (Conflict - Android - $timestamp).md"
-                file.copyTo(File(localRepoDir, conflictName), overwrite = true)
-            }
-        }
-
-        try {
-            git.reset().setMode(org.eclipse.jgit.api.ResetCommand.ResetType.HARD).call()
-            git.pull().setRebase(false).setCredentialsProvider(credentials).call()
-        } catch (_: Exception) {}
-
-        git.add().addFilepattern(".").call()
-        git.add().addFilepattern(".").setUpdate(true).call()
-        val postStatus = git.status().call()
-        if (!postStatus.isClean) {
-            git.commit()
-                .setMessage("auto: resolve conflict copy on Android")
-                .setAuthor(authorName, authorEmail)
-                .setCommitter(authorName, authorEmail)
-                .call()
-            git.push().setCredentialsProvider(credentials).call()
+    fun isFileUnsynced(filePath: String): Boolean {
+        return try {
+            if (!isConfigured()) return true
+            val git = Git.open(localRepoDir)
+            val file = File(filePath)
+            val relativePath = file.relativeTo(localRepoDir).path
+            val status = git.status().call()
+            val isDirty = status.uncommittedChanges.contains(relativePath) ||
+                    status.modified.contains(relativePath) ||
+                    status.untracked.contains(relativePath)
+            git.close()
+            isDirty
+        } catch (e: Exception) {
+            false
         }
     }
 
