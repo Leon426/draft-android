@@ -1,3 +1,19 @@
 <resources>
     <string name="app_name">Draft</string>
+    <string name="setup_title">Repository Setup</string>
+    <string name="setup_repo_url_label">GitHub HTTPS Clone URL</string>
+    <string name="setup_pat_label">Personal Access Token (PAT)</string>
+    <string name="setup_author_name_label">Git Author Name</string>
+    <string name="setup_author_email_label">Git Author Email</string>
+    <string name="setup_clone_button">Save &amp; Clone Repository</string>
+    <string name="setup_in_progress">Cloning repository...</string>
+    <string name="settings_title">Git Settings</string>
+    <string name="note_list_title">Notes</string>
+    <string name="note_new_button">New Note</string>
+    <string name="editor_untitled">Untitled Note</string>
+    <string name="sync_now">Sync Now</string>
+    <string name="sync_idle">Synced</string>
+    <string name="sync_in_progress">Syncing...</string>
+    <string name="sync_error">Sync Failed</string>
+    <string name="delete_note">Delete Note</string>
 </resources>
