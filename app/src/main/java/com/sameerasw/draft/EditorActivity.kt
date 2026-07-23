@@ -14,7 +14,12 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,7 +38,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
+import com.sameerasw.draft.utils.MarkdownAutoFormat
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -92,7 +102,7 @@ class EditorActivity : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun NoteEditorScreen(
     viewModel: NoteEditorViewModel,
@@ -103,7 +113,26 @@ fun NoteEditorScreen(
     val title by viewModel.title.collectAsState()
     val body by viewModel.body.collectAsState()
 
+    var bodyTextFieldValue by remember { mutableStateOf(TextFieldValue(body)) }
     val bodyFocusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(body) {
+        if (body != bodyTextFieldValue.text) {
+            bodyTextFieldValue = TextFieldValue(
+                text = body,
+                selection = TextRange(body.length)
+            )
+        }
+    }
+
+    val scrollState = rememberScrollState()
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+
+    LaunchedEffect(bodyTextFieldValue.selection.end) {
+        try {
+            bringIntoViewRequester.bringIntoView()
+        } catch (_: Exception) {}
+    }
 
     LaunchedEffect(noteId) {
         viewModel.loadNote(noteId)
@@ -168,13 +197,14 @@ fun NoteEditorScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
+                        .imePadding()
                         .progressiveBlur(
                             blurRadius = if (isBlurEnabled) 40f else 0f,
                             height = with(androidx.compose.ui.platform.LocalDensity.current) { 130.dp.toPx() },
                             direction = com.sameerasw.draft.ui.modifiers.BlurDirection.BOTTOM
                         )
-                        .verticalScroll(androidx.compose.foundation.rememberScrollState())
-                        .padding(top = statusBarHeight, bottom = 150.dp, start = 16.dp, end = 16.dp)
+                        .verticalScroll(scrollState)
+                        .padding(top = statusBarHeight, bottom = 400.dp, start = 16.dp, end = 16.dp)
                 ) {
                     val lineColor = MaterialTheme.colorScheme.primary
 
@@ -240,8 +270,12 @@ fun NoteEditorScreen(
                     }
 
                     TextField(
-                        value = body,
-                        onValueChange = { viewModel.onBodyChange(it) },
+                        value = bodyTextFieldValue,
+                        onValueChange = { newValue ->
+                            val processed = MarkdownAutoFormat.processBodyChange(bodyTextFieldValue, newValue)
+                            bodyTextFieldValue = processed
+                            viewModel.onBodyChange(processed.text)
+                        },
                         placeholder = {
                             Text(
                                 text = "Draft here ...",
@@ -257,7 +291,8 @@ fun NoteEditorScreen(
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .defaultMinSize(minHeight = 500.dp)
+                            .defaultMinSize(minHeight = 800.dp)
+                            .bringIntoViewRequester(bringIntoViewRequester)
                             .focusRequester(bodyFocusRequester),
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = Color.Transparent,

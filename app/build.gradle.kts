@@ -18,6 +18,21 @@ android {
     }
 
     buildTypes {
+//        optimized dev build
+
+        //   debug {
+        //      isMinifyEnabled = true
+        //      isShrinkResources = true
+        //      isDebuggable = false
+
+        //      proguardFiles(
+        //          getDefaultProguardFile("proguard-android-optimize.txt"),
+        //          "proguard-rules.pro"
+        //      )
+        //   }
+
+        // end
+
         release {
             optimization {
                 enable = false
@@ -57,6 +72,16 @@ dependencies {
     // ViewModel Compose integration
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.0")
+
+    // Markwon for Markdown rendering in Android
+    implementation("io.noties.markwon:core:4.6.2")
+    implementation("io.noties.markwon:ext-strikethrough:4.6.2")
+    implementation("io.noties.markwon:ext-tables:4.6.2")
+    implementation("io.noties.markwon:ext-tasklist:4.6.2")
+    implementation("io.noties.markwon:ext-latex:4.6.2")
+    implementation("io.noties.markwon:html:4.6.2")
+    implementation("io.noties.markwon:image:4.6.2")
+    implementation("io.noties.markwon:linkify:4.6.2")
 
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
