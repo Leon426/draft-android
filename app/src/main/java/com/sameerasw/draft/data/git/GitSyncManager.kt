@@ -75,8 +75,9 @@ class GitSyncManager(private val context: Context) {
             val authorName = getAuthorName()
             val authorEmail = getAuthorEmail()
 
-            // 1. Add all local changes
+            // 1. Stage both new/modified files and deleted files
             git.add().addFilepattern(".").call()
+            git.add().addFilepattern(".").setUpdate(true).call()
 
             // 2. Commit if there are changes
             val status = git.status().call()
@@ -122,36 +123,30 @@ class GitSyncManager(private val context: Context) {
         } catch (_: Exception) {}
 
         val timestamp = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date())
-        val files = localRepoDir.listFiles { file -> file.isFile && file.name.endsWith(".md") } ?: emptyArray()
+        val statusBeforeReset = git.status().call()
 
-        for (file in files) {
-            val status = git.status().call()
-            if (status.uncommittedChanges.contains(file.name) || status.modified.contains(file.name)) {
+        for (file in localRepoDir.listFiles { f -> f.isFile && f.name.endsWith(".md") } ?: emptyArray()) {
+            if (statusBeforeReset.uncommittedChanges.contains(file.name) || statusBeforeReset.modified.contains(file.name) || statusBeforeReset.conflicting.contains(file.name)) {
                 val conflictName = "${file.nameWithoutExtension} (Conflict - Android - $timestamp).md"
                 file.copyTo(File(localRepoDir, conflictName), overwrite = true)
             }
         }
 
-        git.reset().setMode(org.eclipse.jgit.api.ResetCommand.ResetType.HARD).call()
-
         try {
-            git.pull()
-                .setRebase(true)
-                .setCredentialsProvider(credentials)
-                .call()
+            git.reset().setMode(org.eclipse.jgit.api.ResetCommand.ResetType.HARD).call()
+            git.pull().setRebase(false).setCredentialsProvider(credentials).call()
         } catch (_: Exception) {}
 
         git.add().addFilepattern(".").call()
-        val postConflictStatus = git.status().call()
-        if (!postConflictStatus.isClean) {
+        git.add().addFilepattern(".").setUpdate(true).call()
+        val postStatus = git.status().call()
+        if (!postStatus.isClean) {
             git.commit()
                 .setMessage("auto: resolve conflict copy on Android")
                 .setAuthor(authorName, authorEmail)
                 .setCommitter(authorName, authorEmail)
                 .call()
-            git.push()
-                .setCredentialsProvider(credentials)
-                .call()
+            git.push().setCredentialsProvider(credentials).call()
         }
     }
 

@@ -59,31 +59,40 @@ class NoteEditorViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
+    private var isDeleted = false
+
+    fun deleteCurrentNote(onDeleted: () -> Unit) {
+        autoSaveJob?.cancel()
+        isDeleted = true
+        val note = _currentNote.value
+        onDeleted()
+        if (note != null) {
+            viewModelScope.launch(Dispatchers.IO) {
+                noteRepository.deleteNote(note)
+                gitSyncManager.sync()
+            }
+        }
+    }
+
     fun saveCurrentNote() {
+        if (isDeleted) return
         val note = _currentNote.value ?: return
         viewModelScope.launch(Dispatchers.IO) {
             noteRepository.saveNote(note, _title.value, _body.value)
         }
     }
 
-    fun deleteCurrentNote(onDeleted: () -> Unit) {
-        val note = _currentNote.value ?: return
-        viewModelScope.launch(Dispatchers.IO) {
-            noteRepository.deleteNote(note)
-            gitSyncManager.sync()
-            viewModelScope.launch(Dispatchers.Main) { onDeleted() }
-        }
-    }
-
     fun syncAndExit(onComplete: () -> Unit) {
         autoSaveJob?.cancel()
         val note = _currentNote.value
-        viewModelScope.launch(Dispatchers.IO) {
-            if (note != null) {
-                noteRepository.saveNote(note, _title.value, _body.value)
+        val titleVal = _title.value
+        val bodyVal = _body.value
+        onComplete()
+        if (note != null) {
+            viewModelScope.launch(Dispatchers.IO) {
+                noteRepository.saveNote(note, titleVal, bodyVal)
+                gitSyncManager.sync()
             }
-            gitSyncManager.sync()
-            viewModelScope.launch(Dispatchers.Main) { onComplete() }
         }
     }
 }
