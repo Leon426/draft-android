@@ -56,9 +56,14 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.zIndex
+import kotlinx.coroutines.delay
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.core.net.toUri
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -326,18 +331,34 @@ fun NoteListScreen(
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                         }
-                                    } else {
+                                     } else {
                                         LazyColumn(
                                             modifier = Modifier.fillMaxSize(),
                                             contentPadding = contentPadding
                                         ) {
                                             item {
                                                 com.sameerasw.draft.ui.components.containers.RoundedCardContainer {
-                                                    notes.forEach { note ->
-                                                        NoteCard(
-                                                            note = note,
-                                                            onClick = { onOpenNote(note.id, false) }
-                                                        )
+                                                    notes.forEachIndexed { index, note ->
+                                                        val visibleState = remember { androidx.compose.animation.core.MutableTransitionState(false) }
+                                                        LaunchedEffect(note.id) {
+                                                            kotlinx.coroutines.delay(index * 60L)
+                                                            visibleState.targetState = true
+                                                        }
+
+                                                        androidx.compose.animation.AnimatedVisibility(
+                                                            visibleState = visibleState,
+                                                            enter = fadeIn(
+                                                                animationSpec = spring(stiffness = Spring.StiffnessLow)
+                                                            ) + slideInVertically(
+                                                                initialOffsetY = { -it / 2 },
+                                                                animationSpec = spring(stiffness = Spring.StiffnessLow)
+                                                            )
+                                                        ) {
+                                                            NoteCard(
+                                                                note = note,
+                                                                onClick = { onOpenNote(note.id, false) }
+                                                            )
+                                                        }
                                                     }
                                                 }
                                             }
@@ -378,6 +399,8 @@ fun SettingsScreen(
     var pat by remember { mutableStateOf(viewModel.gitSyncManager.getPat() ?: "") }
     var authorName by remember { mutableStateOf(viewModel.gitSyncManager.getAuthorName() ?: "") }
     var authorEmail by remember { mutableStateOf(viewModel.gitSyncManager.getAuthorEmail() ?: "") }
+
+    var patVisible by remember { mutableStateOf(false) }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -458,11 +481,32 @@ fun SettingsScreen(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    val context = LocalContext.current
+
                     androidx.compose.material3.OutlinedTextField(
                         value = repoUrl,
                         onValueChange = { repoUrl = it },
                         label = { Text("Repository URL") },
                         singleLine = true,
+                        trailingIcon = {
+                            if (repoUrl.isNotBlank()) {
+                                IconButton(
+                                    onClick = {
+                                        try {
+                                            val webUrl = if (!repoUrl.startsWith("http://") && !repoUrl.startsWith("https://")) {
+                                                "https://$repoUrl"
+                                            } else repoUrl
+                                            context.startActivity(Intent(Intent.ACTION_VIEW, webUrl.toUri()))
+                                        } catch (_: Exception) {}
+                                    }
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.rounded_open_in_new_24),
+                                        contentDescription = "Open Repo in Web"
+                                    )
+                                }
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -471,6 +515,17 @@ fun SettingsScreen(
                         onValueChange = { pat = it },
                         label = { Text("Personal Access Token (PAT)") },
                         singleLine = true,
+                        visualTransformation = if (patVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(onClick = { patVisible = !patVisible }) {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (patVisible) R.drawable.rounded_visibility_24 else R.drawable.rounded_visibility_off_24
+                                    ),
+                                    contentDescription = if (patVisible) "Hide token" else "Show token"
+                                )
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth()
                     )
 
