@@ -356,7 +356,8 @@ fun NoteListScreen(
                                                         ) {
                                                             NoteCard(
                                                                 note = note,
-                                                                onClick = { onOpenNote(note.id, false) }
+                                                                onClick = { onOpenNote(note.id, false) },
+                                                                onDelete = { viewModel.deleteNote(note.id) }
                                                             )
                                                         }
                                                     }

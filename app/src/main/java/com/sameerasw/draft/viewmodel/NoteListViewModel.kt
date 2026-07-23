@@ -98,6 +98,16 @@ class NoteListViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    fun deleteNote(noteId: String) {
+        viewModelScope.launch {
+            val targetNote = noteRepository.getNoteById(noteId)
+            if (targetNote != null) {
+                noteRepository.deleteNote(targetNote)
+                loadNotes()
+            }
+        }
+    }
+
     fun createNote(onCreated: (Note) -> Unit) {
         viewModelScope.launch {
             val note = noteRepository.createNote()
