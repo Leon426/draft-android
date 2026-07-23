@@ -37,6 +37,16 @@ class NoteListViewModel(application: Application) : AndroidViewModel(application
     private val _cloneError = MutableStateFlow<String?>(null)
     val cloneError: StateFlow<String?> = _cloneError.asStateFlow()
 
+    private val prefs = application.getSharedPreferences("draft_settings", android.content.Context.MODE_PRIVATE)
+
+    private val _isBlurEnabled = MutableStateFlow(prefs.getBoolean("enable_ui_blur", true))
+    val isBlurEnabled: StateFlow<Boolean> = _isBlurEnabled.asStateFlow()
+
+    fun setBlurEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean("enable_ui_blur", enabled).apply()
+        _isBlurEnabled.value = enabled
+    }
+
     init {
         if (gitSyncManager.isConfigured()) {
             loadNotes()

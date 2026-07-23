@@ -41,6 +41,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import com.sameerasw.draft.ui.modifiers.BlurDirection
+import com.sameerasw.draft.ui.modifiers.progressiveBlur
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -112,16 +116,28 @@ fun NoteEditorScreen(
     val exitAlwaysScrollBehavior = FloatingToolbarDefaults.exitAlwaysScrollBehavior(exitDirection = FloatingToolbarExitDirection.Bottom)
     val pageTitle = title.ifBlank { stringResource(R.string.editor_untitled) }
 
+    val isBlurEnabled = remember {
+        val prefs = viewModel.getApplication<android.app.Application>().getSharedPreferences("draft_settings", android.content.Context.MODE_PRIVATE)
+        prefs.getBoolean("enable_ui_blur", true)
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
             containerColor = MaterialTheme.colorScheme.surfaceContainer,
             topBar = {}
         ) { innerPadding ->
+            val statusBarHeightPx = with(androidx.compose.ui.platform.LocalDensity.current) { statusBarHeight.toPx() }
+
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
+                    .progressiveBlur(
+                        blurRadius = if (isBlurEnabled) 40f else 0f,
+                        height = statusBarHeightPx * 1.15f,
+                        direction = BlurDirection.TOP
+                    )
             ) {
                 EssentialsFloatingToolbar(
                     title = pageTitle,
@@ -151,7 +167,13 @@ fun NoteEditorScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(top = statusBarHeight + 16.dp, bottom = 120.dp, start = 16.dp, end = 16.dp)
+                        .progressiveBlur(
+                            blurRadius = if (isBlurEnabled) 40f else 0f,
+                            height = with(androidx.compose.ui.platform.LocalDensity.current) { 130.dp.toPx() },
+                            direction = com.sameerasw.draft.ui.modifiers.BlurDirection.BOTTOM
+                        )
+                        .verticalScroll(androidx.compose.foundation.rememberScrollState())
+                        .padding(top = statusBarHeight, bottom = 150.dp, start = 16.dp, end = 16.dp)
                 ) {
                     val lineColor = MaterialTheme.colorScheme.primary
 
@@ -233,8 +255,7 @@ fun NoteEditorScreen(
                             capitalization = KeyboardCapitalization.Sentences
                         ),
                         modifier = Modifier
-                            .fillMaxSize()
-                            .weight(1f)
+                            .fillMaxWidth()
                             .focusRequester(bodyFocusRequester),
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = Color.Transparent,

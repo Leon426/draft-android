@@ -78,6 +78,8 @@ import com.sameerasw.draft.ui.components.NoteCard
 import com.sameerasw.draft.ui.theme.DraftTheme
 import com.sameerasw.draft.viewmodel.NoteListViewModel
 import com.sameerasw.draft.viewmodel.SyncUiState
+import com.sameerasw.draft.ui.modifiers.BlurDirection
+import com.sameerasw.draft.ui.modifiers.progressiveBlur
 import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
@@ -151,16 +153,25 @@ fun NoteListScreen(
 
     var showAboutSheet by remember { mutableStateOf(false) }
 
+    val isBlurEnabled by viewModel.isBlurEnabled.collectAsState()
+
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
             containerColor = MaterialTheme.colorScheme.surfaceContainer,
             topBar = {}
         ) { innerPadding ->
+            val statusBarHeightPx = with(androidx.compose.ui.platform.LocalDensity.current) { statusBarHeight.toPx() }
+
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
+                    .progressiveBlur(
+                        blurRadius = if (isBlurEnabled) 40f else 0f,
+                        height = statusBarHeightPx * 1.15f,
+                        direction = BlurDirection.TOP
+                    )
             ) {
                 com.sameerasw.draft.ui.components.toolbar.EssentialsFloatingToolbar(
                     modifier = Modifier
@@ -227,7 +238,13 @@ fun NoteListScreen(
 
                 HorizontalPager(
                     state = pagerState,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .progressiveBlur(
+                            blurRadius = if (isBlurEnabled) 40f else 0f,
+                            height = with(androidx.compose.ui.platform.LocalDensity.current) { 130.dp.toPx() },
+                            direction = BlurDirection.BOTTOM
+                        )
                 ) { page ->
                     when (page) {
                         0 -> {
@@ -290,13 +307,6 @@ fun NoteListScreen(
                                         modifier = Modifier.fillMaxSize(),
                                         contentPadding = contentPadding
                                     ) {
-                                        item {
-                                            Text(
-                                                text = "My Notes",
-                                                style = MaterialTheme.typography.titleMedium,
-                                                modifier = Modifier.padding(start = 4.dp, top = 8.dp, bottom = 12.dp)
-                                            )
-                                        }
 
                                         item {
                                             com.sameerasw.draft.ui.components.containers.RoundedCardContainer{
@@ -352,9 +362,63 @@ fun SettingsScreen(
     ) {
         item {
             Text(
-                text = "Repository Settings",
+                text = "Interface",
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
+            )
+        }
+
+        item {
+            val isBlurEnabled by viewModel.isBlurEnabled.collectAsState()
+            val isBlurProblematic = remember { com.sameerasw.draft.utils.DeviceUtils.isBlurProblematicDevice() }
+
+            com.sameerasw.draft.ui.components.containers.RoundedCardContainer(
+                modifier = Modifier.fillMaxWidth(),
+                cornerRadius = 24.dp,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            ) {
+                androidx.compose.material3.ListItem(
+                    modifier = Modifier.fillMaxWidth(),
+                    leadingContent = {
+                        Icon(
+                            painter = painterResource(id = if (isBlurEnabled) R.drawable.rounded_blur_on_24 else R.drawable.rounded_blur_off_24),
+                            contentDescription = "UI Blur",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    },
+                    headlineContent = {
+                        Text(
+                            text = "UI Blur",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    },
+                    supportingContent = {
+                        Text(
+                            text = if (isBlurProblematic) "Disabled on unsupported or problematic devices" else "Enable progressive background blurs",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    trailingContent = {
+                        androidx.compose.material3.Switch(
+                            checked = isBlurEnabled && !isBlurProblematic,
+                            onCheckedChange = { viewModel.setBlurEnabled(it) },
+                            enabled = !isBlurProblematic
+                        )
+                    },
+                    colors = androidx.compose.material3.ListItemDefaults.colors(
+                        containerColor = MaterialTheme.colorScheme.surfaceBright
+                    )
+                )
+            }
+        }
+
+        item {
+            Text(
+                text = "Repository",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(start = 4.dp, bottom = 8.dp, top = 8.dp)
             )
         }
 
