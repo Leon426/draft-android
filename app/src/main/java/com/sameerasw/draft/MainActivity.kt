@@ -6,6 +6,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
@@ -248,6 +253,8 @@ fun NoteListScreen(
                 ) { page ->
                     when (page) {
                         0 -> {
+                            val isLoading by viewModel.isLoading.collectAsState()
+
                             PullToRefreshBox(
                                 isRefreshing = isRefreshing,
                                 onRefresh = { viewModel.syncNow() },
@@ -289,32 +296,49 @@ fun NoteListScreen(
                                 },
                                 modifier = Modifier.fillMaxSize()
                             ) {
-                                if (notes.isEmpty()) {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .padding(contentPadding),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = if (isConfigured) "No notes found. Tap + to create one." else "Swipe to Settings to configure repository.",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                } else {
-                                    LazyColumn(
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentPadding = contentPadding
-                                    ) {
-
-                                        item {
-                                            com.sameerasw.draft.ui.components.containers.RoundedCardContainer{
-                                                notes.forEach { note ->
-                                                    NoteCard(
-                                                        note = note,
-                                                        onClick = { onOpenNote(note.id, false) }
-                                                    )
+                                AnimatedContent(
+                                    targetState = isLoading,
+                                    transitionSpec = {
+                                        fadeIn(animationSpec = spring(stiffness = Spring.StiffnessLow)) togetherWith
+                                                fadeOut(animationSpec = spring(stiffness = Spring.StiffnessLow))
+                                    },
+                                    label = "notes_loading_transition"
+                                ) { loading ->
+                                    if (loading) {
+                                        Box(
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            LoadingIndicator(
+                                                modifier = Modifier.size(120.dp)
+                                            )
+                                        }
+                                    } else if (notes.isEmpty()) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .padding(contentPadding),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = if (isConfigured) "No notes found. Tap + to create one." else "Swipe to Settings to configure repository.",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    } else {
+                                        LazyColumn(
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentPadding = contentPadding
+                                        ) {
+                                            item {
+                                                com.sameerasw.draft.ui.components.containers.RoundedCardContainer {
+                                                    notes.forEach { note ->
+                                                        NoteCard(
+                                                            note = note,
+                                                            onClick = { onOpenNote(note.id, false) }
+                                                        )
+                                                    }
                                                 }
                                             }
                                         }

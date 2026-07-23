@@ -47,15 +47,25 @@ class NoteListViewModel(application: Application) : AndroidViewModel(application
         _isBlurEnabled.value = enabled
     }
 
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
     init {
         if (gitSyncManager.isConfigured()) {
             loadNotes()
+        } else {
+            _isLoading.value = false
         }
     }
 
     fun loadNotes() {
         viewModelScope.launch {
-            noteRepository.loadNotes()
+            _isLoading.value = true
+            try {
+                noteRepository.loadNotes()
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 
