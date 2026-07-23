@@ -99,9 +99,10 @@ class MainActivity : ComponentActivity() {
             DraftTheme {
                 NoteListScreen(
                     viewModel = viewModel,
-                    onOpenNote = { noteId ->
+                    onOpenNote = { noteId, isNew ->
                         val intent = Intent(this, EditorActivity::class.java).apply {
                             putExtra(EditorActivity.EXTRA_NOTE_ID, noteId)
+                            putExtra(EditorActivity.EXTRA_IS_NEW_NOTE, isNew)
                         }
                         startActivity(intent)
                     }
@@ -122,7 +123,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun NoteListScreen(
     viewModel: NoteListViewModel,
-    onOpenNote: (String) -> Unit
+    onOpenNote: (String, Boolean) -> Unit
 ) {
     val notes by viewModel.notes.collectAsState(initial = emptyList())
     val isConfigured by viewModel.isConfigured.collectAsState()
@@ -192,7 +193,7 @@ fun NoteListScreen(
                             FloatingActionButton(
                                 onClick = {
                                     viewModel.createNote { newNote ->
-                                        onOpenNote(newNote.id)
+                                        onOpenNote(newNote.id, true)
                                     }
                                 },
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -302,7 +303,7 @@ fun NoteListScreen(
                                                 notes.forEach { note ->
                                                     NoteCard(
                                                         note = note,
-                                                        onClick = { onOpenNote(note.id) }
+                                                        onClick = { onOpenNote(note.id, false) }
                                                     )
                                                 }
                                             }

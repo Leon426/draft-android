@@ -15,8 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButton
@@ -25,24 +24,32 @@ import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.FloatingToolbarExitDirection
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.sameerasw.draft.ui.components.toolbar.EssentialsFloatingToolbar
 import com.sameerasw.draft.ui.theme.DraftTheme
 import com.sameerasw.draft.viewmodel.NoteEditorViewModel
+import kotlinx.coroutines.delay
 
 class EditorActivity : ComponentActivity() {
 
@@ -53,12 +60,14 @@ class EditorActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         val noteId = intent.getStringExtra(EXTRA_NOTE_ID) ?: ""
+        val isNewNote = intent.getBooleanExtra(EXTRA_IS_NEW_NOTE, false)
 
         setContent {
             DraftTheme {
                 NoteEditorScreen(
                     viewModel = viewModel,
                     noteId = noteId,
+                    isNewNote = isNewNote,
                     onBack = {
                         viewModel.syncAndExit { finish() }
                     }
@@ -74,6 +83,7 @@ class EditorActivity : ComponentActivity() {
 
     companion object {
         const val EXTRA_NOTE_ID = "extra_note_id"
+        const val EXTRA_IS_NEW_NOTE = "extra_is_new_note"
     }
 }
 
@@ -82,13 +92,20 @@ class EditorActivity : ComponentActivity() {
 fun NoteEditorScreen(
     viewModel: NoteEditorViewModel,
     noteId: String,
+    isNewNote: Boolean,
     onBack: () -> Unit
 ) {
     val title by viewModel.title.collectAsState()
     val body by viewModel.body.collectAsState()
 
+    val bodyFocusRequester = remember { FocusRequester() }
+
     LaunchedEffect(noteId) {
         viewModel.loadNote(noteId)
+        if (isNewNote) {
+            delay(200)
+            bodyFocusRequester.requestFocus()
+        }
     }
 
     val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
@@ -138,7 +155,7 @@ fun NoteEditorScreen(
                 ) {
                     val lineColor = MaterialTheme.colorScheme.primary
 
-                    androidx.compose.material3.TextField(
+                    TextField(
                         value = title,
                         onValueChange = { viewModel.onTitleChange(it) },
                         placeholder = {
@@ -152,6 +169,9 @@ fun NoteEditorScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         ),
                         singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            capitalization = KeyboardCapitalization.Sentences
+                        ),
                         modifier = Modifier.fillMaxWidth(),
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = Color.Transparent,
@@ -190,13 +210,13 @@ fun NoteEditorScreen(
                                 color = lineColor,
                                 style = Stroke(
                                     width = 1.5.dp.toPx(),
-                                    cap = androidx.compose.ui.graphics.StrokeCap.Round
+                                    cap = StrokeCap.Round
                                 )
                             )
                         }
                     }
 
-                    androidx.compose.material3.TextField(
+                    TextField(
                         value = body,
                         onValueChange = { viewModel.onBodyChange(it) },
                         placeholder = {
@@ -209,9 +229,13 @@ fun NoteEditorScreen(
                         textStyle = MaterialTheme.typography.bodyLarge.copy(
                             color = MaterialTheme.colorScheme.onSurface
                         ),
+                        keyboardOptions = KeyboardOptions(
+                            capitalization = KeyboardCapitalization.Sentences
+                        ),
                         modifier = Modifier
                             .fillMaxSize()
-                            .weight(1f),
+                            .weight(1f)
+                            .focusRequester(bodyFocusRequester),
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = Color.Transparent,
                             unfocusedContainerColor = Color.Transparent,
