@@ -140,4 +140,23 @@ object MarkdownAutoFormat {
 
         return newValue
     }
+
+    fun formatExistingMarkdown(text: String): String {
+        if (text.isEmpty()) return text
+        val lines = text.split("\n").toMutableList()
+        for (i in lines.indices) {
+            val line = lines[i]
+            when {
+                line.startsWith("# ") -> lines[i] = "♯ " + line.substring(2)
+                line.startsWith("## ") -> lines[i] = "⌗ " + line.substring(3)
+                line.startsWith("- ") -> lines[i] = "• " + line.substring(2)
+                line.startsWith("* ") -> lines[i] = "• " + line.substring(2)
+                line.startsWith("[] ") -> lines[i] = "☐ " + line.substring(3)
+                line.startsWith("[ ] ") -> lines[i] = "☐ " + line.substring(4)
+                line.startsWith("[x] ") || line.startsWith("[X] ") -> lines[i] = "☑ " + line.substring(4)
+                line.startsWith("> ") -> lines[i] = "│ " + line.substring(2)
+            }
+        }
+        return lines.joinToString("\n")
+    }
 }

@@ -36,7 +36,7 @@ class NoteEditorViewModel(application: Application) : AndroidViewModel(applicati
             _currentNote.value = note
             if (note != null) {
                 _title.value = note.title
-                _body.value = note.body
+                _body.value = com.sameerasw.draft.utils.MarkdownAutoFormat.formatExistingMarkdown(note.body)
             }
         }
     }
