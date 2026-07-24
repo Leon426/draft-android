@@ -182,8 +182,8 @@ fun NoteEditorScreen(
                             onClick = {
                                 viewModel.deleteCurrentNote { onBack() }
                             },
-                            containerColor = MaterialTheme.colorScheme.errorContainer,
-                            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.background,
                             shape = MaterialTheme.shapes.large,
                             elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp)
                         ) {

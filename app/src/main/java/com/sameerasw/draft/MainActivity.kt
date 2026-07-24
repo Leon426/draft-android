@@ -92,13 +92,103 @@ import com.sameerasw.draft.ui.modifiers.BlurDirection
 import com.sameerasw.draft.ui.modifiers.progressiveBlur
 import java.util.concurrent.TimeUnit
 
+import android.animation.ObjectAnimator
+import android.os.Build
+import android.util.Log
+import android.view.animation.AnticipateInterpolator
+import androidx.core.animation.doOnEnd
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.core.view.WindowCompat
+
 class MainActivity : ComponentActivity() {
 
     private val viewModel: NoteListViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
+
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            window.isNavigationBarContrastEnforced = false
+        }
+
+        splashScreen.setOnExitAnimationListener { splashScreenViewProvider ->
+            try {
+                val splashScreenView = splashScreenViewProvider.view
+                val splashIcon = try {
+                    splashScreenViewProvider.iconView
+                } catch (e: Exception) {
+                    null
+                }
+
+                val fadeOut = ObjectAnimator.ofFloat(splashScreenView, "alpha", 1f, 0f).apply {
+                    interpolator = AnticipateInterpolator()
+                    duration = 750
+                }
+                fadeOut.doOnEnd {
+                    splashScreenViewProvider.remove()
+                    enableEdgeToEdge()
+                }
+
+                try {
+                    @Suppress("SENSELESS_COMPARISON")
+                    if (splashIcon != null) {
+                        val scaleUpX = ObjectAnimator.ofFloat(splashIcon, "scaleX", 1f, 1.5f).apply {
+                            interpolator = AnticipateInterpolator()
+                            duration = 750
+                        }
+
+                        val scaleUpY = ObjectAnimator.ofFloat(splashIcon, "scaleY", 1f, 1.5f).apply {
+                            interpolator = AnticipateInterpolator()
+                            duration = 750
+                        }
+
+                        scaleUpX.start()
+                        scaleUpY.start()
+                    } else {
+                        Log.w("SplashScreen", "iconView is null - OEM device detected")
+                    }
+                } catch (e: NullPointerException) {
+                    Log.w(
+                        "SplashScreen",
+                        "NullPointerException on iconView animation - likely OEM device",
+                        e
+                    )
+                }
+
+                val brandingViewId = resources.getIdentifier("splashscreen_branding_view", "id", "android")
+                val brandingView = if (brandingViewId != 0) {
+                    splashScreenView.findViewById<android.view.View>(brandingViewId)
+                } else {
+                    null
+                }
+
+                if (brandingView != null) {
+                    ObjectAnimator.ofFloat(
+                        brandingView,
+                        "translationY",
+                        0f,
+                        -brandingView.height.toFloat()
+                    ).apply {
+                        interpolator = AnticipateInterpolator()
+                        duration = 750
+                        start()
+                    }
+                }
+
+                fadeOut.start()
+            } catch (e: Exception) {
+                Log.e("SplashScreen", "Exception during splash screen animation", e)
+                try {
+                    splashScreenViewProvider.remove()
+                } catch (e2: Exception) {
+                    Log.e("SplashScreen", "Exception during splash screen removal", e2)
+                }
+            }
+        }
 
         // Schedule periodic background sync
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
@@ -218,7 +308,7 @@ fun NoteListScreen(
                                     }
                                 },
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                contentColor = MaterialTheme.colorScheme.background,
                                 shape = MaterialTheme.shapes.large,
                                 elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp)
                             ) {
@@ -233,7 +323,7 @@ fun NoteListScreen(
                                     showAboutSheet = true
                                 },
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                contentColor = MaterialTheme.colorScheme.background,
                                 shape = MaterialTheme.shapes.large,
                                 elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp)
                             ) {
