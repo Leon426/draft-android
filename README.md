@@ -7,6 +7,18 @@ A simple markdown notes app synced to your [mac](https://github.com/sameerasw/dr
   <img width="30%" alt="Screenshot_20260724-130333" src="https://github.com/user-attachments/assets/9e40a00b-408a-4d0a-8b82-0127a609c121" />
 </p>
 
+
+<p align="center">
+  <a href="https://www.reddit.com/r/MadebySameerasw"><img  width="49%"  alt=" reddit-banner" src="https://github.com/user-attachments/assets/a5197458-d64a-4c6a-a6a3-9e1f36030205" /></a>
+  <a href="https://t.me/tidwib"><img  width="49%"  alt=" telegram-banner" src="https://github.com/user-attachments/assets/425b3cc1-9ac6-46ec-8f48-71c7af9c9ca2" /></a>
+</p>
+
+> **More projects:** [sameerasw.com](https://sameerasw.com/#updates)
+> <br>**Show some love:** [buymeacoffee](https://buymeacoffee.com/sameerasw) | [GitHub Sponsor](https://github.com/sponsors/sameerasw)
+> 
+> <img width="400" alt="madeby Medium" src="https://github.com/user-attachments/assets/cea162a1-4cbb-4b5b-b21b-80be522ab646" />
+
+
 ## How to setup?
 1. Install the app
 2. Create a new GitHub repo (Keep it private for personal notes)
