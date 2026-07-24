@@ -149,6 +149,7 @@ object MarkdownAutoFormat {
             when {
                 line.startsWith("# ") -> lines[i] = "♯ " + line.substring(2)
                 line.startsWith("## ") -> lines[i] = "⌗ " + line.substring(3)
+                line.startsWith("### ") -> lines[i] = "### " + line.substring(4)
                 line.startsWith("- ") -> lines[i] = "• " + line.substring(2)
                 line.startsWith("* ") -> lines[i] = "• " + line.substring(2)
                 line.startsWith("[] ") -> lines[i] = "☐ " + line.substring(3)

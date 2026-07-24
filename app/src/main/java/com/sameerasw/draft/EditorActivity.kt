@@ -273,12 +273,25 @@ fun NoteEditorScreen(
                         }
                     }
 
+                    val headerColor = MaterialTheme.colorScheme.primary
+                    val codeBg = MaterialTheme.colorScheme.surfaceContainerHigh
+                    val quoteColor = MaterialTheme.colorScheme.secondary
+                    val quoteBg = MaterialTheme.colorScheme.surfaceContainerLow
+
                     TextField(
                         value = bodyTextFieldValue,
                         onValueChange = { newValue ->
                             val processed = MarkdownAutoFormat.processBodyChange(bodyTextFieldValue, newValue)
                             bodyTextFieldValue = processed
                             viewModel.onBodyChange(processed.text)
+                        },
+                        visualTransformation = remember(headerColor, codeBg, quoteColor, quoteBg) {
+                            com.sameerasw.draft.utils.MarkdownVisualTransformation(
+                                headerColor = headerColor,
+                                codeBackground = codeBg,
+                                quoteColor = quoteColor,
+                                quoteBackground = quoteBg
+                            )
                         },
                         placeholder = {
                             Text(
