@@ -1,5 +1,5 @@
 # Draft Android
-A simple markdown notes app synced to your mac via GitHub repo
+A simple markdown notes app synced to your [mac](https://github.com/sameerasw/draft-mac) via GitHub repo
 
 <p align="center">
   <img width="30%" alt="Screenshot_20260724-130313" src="https://github.com/user-attachments/assets/35c92874-2e88-44ba-96f1-b5a85d02dcbf" />
