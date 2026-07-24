@@ -19,7 +19,7 @@ object MarkdownAutoFormat {
                 val lineStart = newText.lastIndexOf('\n', cursor - 2) + 1
                 val prefix = newText.substring(lineStart, cursor)
 
-                // Headers: # , ## , ### , #### , ##### , ###### 
+                // Headers: # , ## , ### 
                 if (prefix == "# ") {
                     val formattedText = newText.replaceRange(lineStart, cursor, "♯ ")
                     return TextFieldValue(text = formattedText, selection = TextRange(lineStart + 2))
@@ -27,14 +27,14 @@ object MarkdownAutoFormat {
                     val formattedText = newText.replaceRange(lineStart, cursor, "⌗ ")
                     return TextFieldValue(text = formattedText, selection = TextRange(lineStart + 2))
                 } else if (prefix == "### ") {
-                    val formattedText = newText.replaceRange(lineStart, cursor, "### ")
-                    return TextFieldValue(text = formattedText, selection = TextRange(lineStart + 4))
+                    val formattedText = newText.replaceRange(lineStart, cursor, "⌗ ")
+                    return TextFieldValue(text = formattedText, selection = TextRange(lineStart + 2))
                 }
 
-                // Code block trigger: ``` 
+                // Code block trigger: ``` -> format cleanly as code block
                 if (prefix == "``` ") {
-                    val formattedText = newText.replaceRange(lineStart, cursor, "```\n\n```")
-                    return TextFieldValue(text = formattedText, selection = TextRange(lineStart + 4))
+                    val formattedText = newText.replaceRange(lineStart, cursor, "")
+                    return TextFieldValue(text = formattedText, selection = TextRange(lineStart))
                 }
 
                 // Bullet lists: '- ' or '* ' -> '• '
@@ -144,20 +144,28 @@ object MarkdownAutoFormat {
     fun formatExistingMarkdown(text: String): String {
         if (text.isEmpty()) return text
         val lines = text.split("\n").toMutableList()
-        for (i in lines.indices) {
-            val line = lines[i]
-            when {
-                line.startsWith("# ") -> lines[i] = "♯ " + line.substring(2)
-                line.startsWith("## ") -> lines[i] = "⌗ " + line.substring(3)
-                line.startsWith("### ") -> lines[i] = "### " + line.substring(4)
-                line.startsWith("- ") -> lines[i] = "• " + line.substring(2)
-                line.startsWith("* ") -> lines[i] = "• " + line.substring(2)
-                line.startsWith("[] ") -> lines[i] = "☐ " + line.substring(3)
-                line.startsWith("[ ] ") -> lines[i] = "☐ " + line.substring(4)
-                line.startsWith("[x] ") || line.startsWith("[X] ") -> lines[i] = "☑ " + line.substring(4)
-                line.startsWith("> ") -> lines[i] = "│ " + line.substring(2)
+        var inCodeBlock = false
+        val result = mutableListOf<String>()
+
+        for (line in lines) {
+            if (line.startsWith("```")) {
+                inCodeBlock = !inCodeBlock
+                continue
             }
+            val formattedLine = when {
+                line.startsWith("# ") -> "♯ " + line.substring(2)
+                line.startsWith("## ") -> "⌗ " + line.substring(3)
+                line.startsWith("### ") -> "⌗ " + line.substring(4)
+                line.startsWith("- ") -> "• " + line.substring(2)
+                line.startsWith("* ") -> "• " + line.substring(2)
+                line.startsWith("[] ") -> "☐ " + line.substring(3)
+                line.startsWith("[ ] ") -> "☐ " + line.substring(4)
+                line.startsWith("[x] ") || line.startsWith("[X] ") -> "☑ " + line.substring(4)
+                line.startsWith("> ") -> "│ " + line.substring(2)
+                else -> line
+            }
+            result.add(formattedLine)
         }
-        return lines.joinToString("\n")
+        return result.joinToString("\n")
     }
 }
