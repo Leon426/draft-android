@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Velo</string>
+    <string name="tab_downloads">下載</string>
+    <string name="tab_settings">設定</string>
+    <string name="new_download">新增下載</string>
+    <string name="paste_or_enter_url">輸入或貼上影片連結…</string>
+    <string name="parse_link">解析</string>
+    <string name="parsing_link">正在解析連結…</string>
+    <string name="download_best_video">下載最佳畫質影片</string>
+    <string name="download_best_audio">擷取最佳音訊</string>
+    <string name="more_formats">更多解析度與格式</string>
+    <string name="empty_tasks_title">目前沒有下載任務</string>
+    <string name="empty_tasks_desc">點擊下方 + 按鈕貼上影片連結開始下載</string>
+    <string name="storage_location">下載儲存目錄</string>
+    <string name="storage_location_desc">下載的檔案將儲存在此位置</string>
+    <string name="choose_folder">變更目錄</string>
+    <string name="ui_blur">UI 漸進式模糊</string>
+    <string name="ui_blur_desc">啟用 AGSL 漸進式毛玻璃效果</string>
+    <string name="ytdlp_version">yt-dlp 核心版本</string>
+    <string name="about_velo">關於 Velo</string>
+    <string name="delete_task">刪除任務</string>
+    <string name="open_file">開啟檔案</string>
+    <string name="share_file">分享檔案</string>
+
+    <!-- Settings Sections & Items -->
+    <string name="sec_download_preferences">下載偏好</string>
+    <string name="max_resolution">偏好最高解析度</string>
+    <string name="audio_format">音訊擷取格式</string>
+    <string name="embed_thumbnail">嵌入封面圖片</string>
+    <string name="embed_thumbnail_desc">將影片封面嵌入媒體檔案中</string>
+    <string name="restrict_filenames">限制檔名字元</string>
+    <string name="restrict_filenames_desc">將特殊字元與空格替換為底線以確保相容</string>
+
+    <string name="sec_network">網路與加速</string>
+    <string name="network_proxy">網路代理</string>
+    <string name="network_proxy_desc">設定 HTTP / HTTPS / SOCKS5 代理</string>
+    <string name="aria2c_accel">多執行緒並發加速 (Aria2c)</string>
+    <string name="aria2c_accel_desc">使用 aria2c 進行分段多連線加速下載</string>
+
+    <string name="sec_storage">儲存與快取</string>
+    <string name="separate_folders">分類音訊與影片子目錄</string>
+    <string name="separate_folders_desc">影片儲存至 Video/，音訊儲存至 Audio/</string>
+    <string name="clear_cache">清理暫存檔案與快取</string>
+    <string name="clear_cache_desc">清理未完成的下載片段及暫存檔</string>
+
+    <string name="sec_appearance">外觀與介面</string>
+    <string name="app_theme">應用程式主題</string>
+    <string name="dynamic_color">動態取色 (Material You)</string>
+    <string name="dynamic_color_desc">從系統桌布自動擷取色彩</string>
+    <string name="app_language">介面語言</string>
+    <string name="app_language_desc">選取應用程式顯示語言</string>
+
+    <string name="sec_engine">引擎核心與維護</string>
+    <string name="ytdlp_core_engine">yt-dlp 核心引擎</string>
+    <string name="check_ytdlp_updates">檢查解析指令碼更新</string>
+    <string name="check_ytdlp_updates_desc">從官方發布管道檢查並取得最新版本</string>
+
+    <string name="sec_about">關於與說明</string>
+    <string name="about_subtitle">Material 3 Expressive 影片下載器</string>
+    <string name="about_desc">Velo 結合了 yt-dlp 強大的下載功能與靈動優雅的 Material 3 設計體驗。</string>
+    <string name="powered_by">基於 Seal 與 yt-dlp 建構</string>
+
+    <!-- General / Dialog Common -->
+    <string name="follow_system">跟隨系統</string>
+    <string name="theme_light">淺色模式</string>
+    <string name="theme_dark">深色模式</string>
+    <string name="confirm">確認</string>
+    <string name="cancel">取消</string>
+    <string name="save">儲存</string>
+    <string name="proxy_hint">例如 socks5://127.0.0.1:10808 或 http://127.0.0.1:7890</string>
+
+    <!-- Added Seal Settings & Engine Options -->
+    <string name="downloader_engine">下載引擎</string>
+    <string name="downloader_engine_desc">在原生 yt-dlp 或多執行緒 Aria2c 之間選擇</string>
+    <string name="downloader_native">原生 yt-dlp</string>
+    <string name="downloader_aria2c">Aria2c 多連接加速</string>
+    <string name="concurrent_connections">並發連接 / 分塊數</string>
+    <string name="concurrent_connections_desc">並行下載的分段連線數</string>
+    <string name="rate_limit">下載速度限制</string>
+    <string name="rate_limit_desc">限制下載所佔用的最大頻寬</string>
+    <string name="rate_unlimited">不限速</string>
+    <string name="force_ipv4">強制使用 IPv4</string>
+    <string name="force_ipv4_desc">停用 IPv6 連線以防止部分電信商超時</string>
+    <string name="cellular_download">允許行動網路下載</string>
+    <string name="cellular_download_desc">允許在行動數據網路下進行下載</string>
+    <string name="update_channel">yt-dlp 更新通道</string>
+    <string name="update_channel_desc">在官方穩定版與每夜構建版之間切換</string>
+    <string name="channel_stable">yt-dlp (穩定版)</string>
+    <string name="channel_nightly">yt-dlp-nightly-builds (每夜構建版)</string>
+    <string name="auto_update_interval">自動檢查更新頻率</string>
+    <string name="auto_update_interval_desc">自動獲取最新影片提取指令碼的週期</string>
+    <string name="interval_disabled">關閉</string>
+    <string name="interval_daily">每天</string>
+    <string name="interval_weekly">每週</string>
+    <string name="interval_monthly">每月</string>
+    <string name="video_container">影片格式偏好</string>
+    <string name="video_container_desc">合併與下載影片的目標封裝格式</string>
+    <string name="audio_quality">音訊提取位元速率</string>
+    <string name="audio_quality_desc">音訊提取轉換的碼率品質</string>
+    <string name="merge_to_mkv">混流封裝為 MKV</string>
+    <string name="merge_to_mkv_desc">使用 Matroska 容器保留最完整的音軌與字幕</string>
+    <string name="download_subtitles">下載字幕</string>
+    <string name="download_subtitles_desc">從影片中提取可用的字幕軌道</string>
+    <string name="embed_subtitles">嵌入字幕至影片</string>
+    <string name="embed_subtitles_desc">將字幕直接封裝進影片檔案內</string>
+    <string name="auto_subtitles">包含自動生成的字幕</string>
+    <string name="auto_subtitles_desc">若提供機器產生的自動字幕一併提取</string>
+    <string name="subtitle_langs">首選字幕語言</string>
+    <string name="subtitle_langs_desc">語言代碼（例如 all, zh, en, ja）</string>
+    <string name="crop_artwork">裁剪封面為正方形</string>
+    <string name="crop_artwork_desc">將音訊內嵌封面裁剪為 1:1 正方形比例</string>
+    <string name="embed_metadata">寫入媒體元數據標籤</string>
+    <string name="embed_metadata_desc">寫入標題、作者、發布日期及簡介標籤</string>
+    <string name="download_playlist">下載播放清單 / 影片合輯</string>
+    <string name="download_playlist_desc">當連結含有播放清單 ID 時解析並下載所有影片</string>
+    <string name="download_archive">跳過已下載內容 (封存)</string>
+    <string name="download_archive_desc">記錄已下載影片 ID 防止重複下載</string>
+    <string name="sponsorblock">SponsorBlock (跳過贊助片段)</string>
+    <string name="sponsorblock_desc">自動切除影片內的贊助廣告及片頭</string>
+    <string name="private_mode">私密下載模式</string>
+    <string name="private_mode_desc">下載任務不寫入本地歷史記錄</string>
+    <string name="debug_log">詳細除錯記錄</string>
+    <string name="debug_log_desc">印出完整診斷資訊以便排查下載錯誤</string>
+    <string name="sub_dir_extractor">依平台/作者建立子資料夾</string>
+    <string name="sub_dir_extractor_desc">將下載檔案分類保存至 網站/作者 子目錄</string>
+    <string name="threads_1">1 個連接 (單執行緒)</string>
+    <string name="threads_4">4 個連接</string>
+    <string name="threads_8">8 個連接</string>
+    <string name="threads_16">16 個連接 (最高速度)</string>
+    <string name="sec_general_behaviors">常規與下載行為</string>
+</resources>

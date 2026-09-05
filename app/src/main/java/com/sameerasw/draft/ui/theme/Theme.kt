@@ -35,18 +35,23 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun DraftTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
+    themeMode: com.sameerasw.draft.data.repository.AppThemeMode = com.sameerasw.draft.data.repository.AppThemeMode.SYSTEM,
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
+    val isSystemDark = isSystemInDarkTheme()
+    val isDark = when (themeMode) {
+        com.sameerasw.draft.data.repository.AppThemeMode.SYSTEM -> isSystemDark
+        com.sameerasw.draft.data.repository.AppThemeMode.LIGHT -> false
+        com.sameerasw.draft.data.repository.AppThemeMode.DARK -> true
+    }
+
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-
-        darkTheme -> DarkColorScheme
+        isDark -> DarkColorScheme
         else -> LightColorScheme
     }
 

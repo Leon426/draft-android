@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Velo</string>
+    <string name="tab_downloads">ダウンロード</string>
+    <string name="tab_settings">設定</string>
+    <string name="new_download">新規ダウンロード</string>
+    <string name="paste_or_enter_url">動画リンクを入力または貼り付け…</string>
+    <string name="parse_link">解析</string>
+    <string name="parsing_link">リンクを解析中…</string>
+    <string name="download_best_video">最高画質でダウンロード</string>
+    <string name="download_best_audio">音声を抽出</string>
+    <string name="more_formats">その他の解像度・フォーマット</string>
+    <string name="empty_tasks_title">タスクがありません</string>
+    <string name="empty_tasks_desc">下の + をタップして動画リンクを貼り付けてください</string>
+    <string name="storage_location">保存先ディレクトリ</string>
+    <string name="storage_location_desc">ファイルはこのフォルダに保存されます</string>
+    <string name="choose_folder">フォルダを変更</string>
+    <string name="ui_blur">UIぼかし効果</string>
+    <string name="ui_blur_desc">AGSLシェーダーによるすりガラス効果を有効にする</string>
+    <string name="ytdlp_version">yt-dlp バージョン</string>
+    <string name="about_velo">Velo について</string>
+    <string name="delete_task">タスクを削除</string>
+    <string name="open_file">ファイルを開く</string>
+    <string name="share_file">ファイルを共有</string>
+
+    <!-- Settings Sections & Items -->
+    <string name="sec_download_preferences">ダウンロード設定</string>
+    <string name="max_resolution">優先解像度</string>
+    <string name="audio_format">音声抽出フォーマット</string>
+    <string name="embed_thumbnail">サムネイルを埋め込む</string>
+    <string name="embed_thumbnail_desc">カバー画像をメディアファイルに直接埋め込みます</string>
+    <string name="restrict_filenames">安全なファイル名に制限</string>
+    <string name="restrict_filenames_desc">特殊文字や空白をアンダースコアに置換します</string>
+
+    <string name="sec_network">ネットワークと高速化</string>
+    <string name="network_proxy">プロキシ設定</string>
+    <string name="network_proxy_desc">HTTP / HTTPS / SOCKS5 プロキシを設定</string>
+    <string name="aria2c_accel">マルチ接続高速化 (Aria2c)</string>
+    <string name="aria2c_accel_desc">aria2cによる分割並行ダウンロードを使用</string>
+
+    <string name="sec_storage">ストレージとキャッシュ</string>
+    <string name="separate_folders">動画と音声をフォルダ分け</string>
+    <string name="separate_folders_desc">Video/ と Audio/ のサブフォルダに分けて保存</string>
+    <string name="clear_cache">一時ファイルとキャッシュを消去</string>
+    <string name="clear_cache_desc">未完了の断片や一時キャッシュをクリーンアップ</string>
+
+    <string name="sec_appearance">外観とテーマ</string>
+    <string name="app_theme">アプリのテーマ</string>
+    <string name="dynamic_color">ダイナミックカラー (Material You)</string>
+    <string name="dynamic_color_desc">壁紙からカラーパレットを自動抽出</string>
+    <string name="app_language">表示言語</string>
+    <string name="app_language_desc">アプリの表示言語を選択</string>
+
+    <string name="sec_engine">エンジンと保守</string>
+    <string name="ytdlp_core_engine">yt-dlp コアエンジン</string>
+    <string name="check_ytdlp_updates">スクリプトの更新を確認</string>
+    <string name="check_ytdlp_updates_desc">公式リリースから最新の抽出スクリプトを取得</string>
+
+    <string name="sec_about">アプリ情報とヘルプ</string>
+    <string name="about_subtitle">Material 3 Expressive 動画ダウンローダー</string>
+    <string name="about_desc">yt-dlp の強力なダウンロード機能と流麗な Material 3 デザインを融合。</string>
+    <string name="powered_by">Seal および yt-dlp を基盤に構築</string>
+
+    <!-- General / Dialog Common -->
+    <string name="follow_system">システムに従う</string>
+    <string name="theme_light">ライトモード</string>
+    <string name="theme_dark">ダークモード</string>
+    <string name="confirm">確認</string>
+    <string name="cancel">キャンセル</string>
+    <string name="save">保存</string>
+    <string name="proxy_hint">例: socks5://127.0.0.1:10808 または http://127.0.0.1:7890</string>
+
+    <!-- Added Seal Settings & Engine Options -->
+    <string name="downloader_engine">ダウンロードエンジン</string>
+    <string name="downloader_engine_desc">内蔵 yt-dlp またはマルチスレッド Aria2c を選択</string>
+    <string name="downloader_native">内蔵 yt-dlp</string>
+    <string name="downloader_aria2c">Aria2c マルチ接続高速化</string>
+    <string name="concurrent_connections">並行接続・分割数</string>
+    <string name="concurrent_connections_desc">同時ダウンロードの接続スレッド数</string>
+    <string name="rate_limit">ダウンロード速度制限</string>
+    <string name="rate_limit_desc">最大ダウンロード帯域幅を制限</string>
+    <string name="rate_unlimited">無制限</string>
+    <string name="force_ipv4">IPv4 を強制</string>
+    <string name="force_ipv4_desc">IPv6 接続タイムアウトを回避</string>
+    <string name="cellular_download">モバイル通信でのダウンロード</string>
+    <string name="cellular_download_desc">モバイルデータ通信使用時のダウンロードを許可</string>
+    <string name="update_channel">yt-dlp 更新チャンネル</string>
+    <string name="update_channel_desc">安定版と Nightly ビルドを切り替え</string>
+    <string name="channel_stable">yt-dlp (安定版)</string>
+    <string name="channel_nightly">yt-dlp-nightly-builds (Nightly)</string>
+    <string name="auto_update_interval">自動更新チェック頻度</string>
+    <string name="auto_update_interval_desc">最新スクリプトの自動確認周期</string>
+    <string name="interval_disabled">無効</string>
+    <string name="interval_daily">毎日</string>
+    <string name="interval_weekly">毎週</string>
+    <string name="interval_monthly">毎月</string>
+    <string name="video_container">優先動画フォーマット</string>
+    <string name="video_container_desc">動画ファイルの出力形式</string>
+    <string name="audio_quality">音声抽出ビットレート</string>
+    <string name="audio_quality_desc">音声抽出の変換品質</string>
+    <string name="merge_to_mkv">MKV 形式で結合</string>
+    <string name="merge_to_mkv_desc">すべてのストリームを保持するために MKV を使用</string>
+    <string name="download_subtitles">字幕をダウンロード</string>
+    <string name="download_subtitles_desc">動画から利用可能な字幕を取得</string>
+    <string name="embed_subtitles">動画に字幕を埋め込む</string>
+    <string name="embed_subtitles_desc">字幕トラックを動画ファイル内に直接格納</string>
+    <string name="auto_subtitles">自動生成字幕を含める</string>
+    <string name="auto_subtitles_desc">機械生成された字幕も取得</string>
+    <string name="subtitle_langs">優先字幕言語</string>
+    <string name="subtitle_langs_desc">言語コード（例: all, ja, en, zh）</string>
+    <string name="crop_artwork">アートワークを正方形にトリミング</string>
+    <string name="crop_artwork_desc">埋め込みカバー画像を 1:1 にトリミング</string>
+    <string name="embed_metadata">メタデータを埋め込む</string>
+    <string name="embed_metadata_desc">タイトル、作成者、日付などのタグを書き込む</string>
+    <string name="download_playlist">プレイリスト全体をダウンロード</string>
+    <string name="download_playlist_desc">URL にプレイリストが含まれる場合にすべて取得</string>
+    <string name="download_archive">ダウンロード済みの動画をスキップ</string>
+    <string name="download_archive_desc">履歴ファイルを元に重複ダウンロードを防止</string>
+    <string name="sponsorblock">SponsorBlock (広告スキップ)</string>
+    <string name="sponsorblock_desc">動画内のスポンサー枠やイントロを自動削除</string>
+    <string name="private_mode">プライベートモード</string>
+    <string name="private_mode_desc">ダウンロード履歴を記録しない</string>
+    <string name="debug_log">詳細デバッグログ</string>
+    <string name="debug_log_desc">トラブルシューティング用の詳細ログを出力</string>
+    <string name="sub_dir_extractor">サイト・作者別のサブフォルダ作成</string>
+    <string name="sub_dir_extractor_desc">サイト/作者ごとのフォルダに整理して保存</string>
+    <string name="threads_1">1 接続 (単一)</string>
+    <string name="threads_4">4 接続</string>
+    <string name="threads_8">8 接続</string>
+    <string name="threads_16">16 接続 (最速)</string>
+    <string name="sec_general_behaviors">全般と動作設定</string>
+</resources>

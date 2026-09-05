@@ -15,6 +15,15 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        ndk {
+            abiFilters.addAll(listOf("arm64-v8a", "armeabi-v7a", "x86_64", "x86"))
+        }
+    }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
     }
 
     buildTypes {
@@ -46,6 +55,9 @@ android {
     buildFeatures {
         compose = true
     }
+    androidResources {
+        generateLocaleConfig = true
+    }
 }
 
 configurations.all {
@@ -56,6 +68,7 @@ configurations.all {
 
 dependencies {
     implementation("androidx.compose.material3:material3:1.4.0-alpha08")
+    implementation("androidx.appcompat:appcompat:1.7.0")
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
@@ -64,25 +77,19 @@ dependencies {
     implementation("androidx.core:core-splashscreen:1.0.1")
     implementation(libs.androidx.lifecycle.runtime.ktx)
 
-    // JGit for pure Java Git integration
-    implementation("org.eclipse.jgit:org.eclipse.jgit:6.8.0.202311291450-r")
-    // Encrypted SharedPreferences for PAT and credential storage
-    implementation("androidx.security:security-crypto:1.1.0-alpha06")
-    // WorkManager for background sync
-    implementation("androidx.work:work-runtime-ktx:2.9.0")
-    // ViewModel Compose integration
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.0")
+    // Coil image loading
+    implementation(libs.coil.compose)
 
-    // Markwon for Markdown rendering in Android
-    implementation("io.noties.markwon:core:4.6.2")
-    implementation("io.noties.markwon:ext-strikethrough:4.6.2")
-    implementation("io.noties.markwon:ext-tables:4.6.2")
-    implementation("io.noties.markwon:ext-tasklist:4.6.2")
-    implementation("io.noties.markwon:ext-latex:4.6.2")
-    implementation("io.noties.markwon:html:4.6.2")
-    implementation("io.noties.markwon:image:4.6.2")
-    implementation("io.noties.markwon:linkify:4.6.2")
+    // youtubedl-android core, ffmpeg & aria2c (from Seal)
+    implementation(libs.youtubedl.android.library)
+    implementation(libs.youtubedl.android.ffmpeg)
+    implementation(libs.youtubedl.android.aria2c)
+
+    // Encrypted SharedPreferences for credential/token storage
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    // ViewModel Compose integration
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
 
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))

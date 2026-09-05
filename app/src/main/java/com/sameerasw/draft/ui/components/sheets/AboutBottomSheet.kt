@@ -50,7 +50,7 @@ fun AboutBottomSheet(
         ) {
             item {
                 Text(
-                    text = "About Draft",
+                    text = "About Velo",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -75,19 +75,19 @@ fun AboutBottomSheet(
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Icon(
-                                painter = painterResource(id = R.drawable.rounded_sticky_note_2_24),
-                                contentDescription = "Draft Icon",
+                                painter = painterResource(id = R.drawable.rounded_video_library_24),
+                                contentDescription = "Velo Icon",
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(32.dp)
                             )
                             Column {
                                 Text(
-                                    text = "Draft",
+                                    text = "Velo",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    text = "v1.0 • Pure Git Notes",
+                                    text = "v1.0 • Material 3 Expressive Video Downloader",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -95,7 +95,7 @@ fun AboutBottomSheet(
                         }
 
                         Text(
-                            text = "Draft is a sleek, material 3 expressive notes application powered by pure Git sync integration. Fully open source & offline-first.",
+                            text = "Velo combines the robust downloading capabilities of yt-dlp with the fluid, expressive Material 3 UI design.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(top = 8.dp)
@@ -107,7 +107,7 @@ fun AboutBottomSheet(
             item {
                 Button(
                     onClick = {
-                        val websiteUrl = "https://github.com"
+                        val websiteUrl = "https://github.com/junkfood02/Seal"
                         val intent = Intent(Intent.ACTION_VIEW, websiteUrl.toUri())
                         context.startActivity(intent)
                     },
@@ -116,12 +116,12 @@ fun AboutBottomSheet(
                         .padding(bottom = 32.dp)
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.rounded_sticky_note_2_24),
+                        painter = painterResource(id = R.drawable.rounded_open_in_new_24),
                         contentDescription = null,
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.size(8.dp))
-                    Text("Visit GitHub Repository")
+                    Text("Powered by Seal & yt-dlp")
                 }
             }
         }
