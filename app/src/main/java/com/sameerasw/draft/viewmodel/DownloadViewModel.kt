@@ -40,6 +40,9 @@ class DownloadViewModel(application: Application) : AndroidViewModel(application
     private val _parseError = MutableStateFlow<String?>(null)
     val parseError: StateFlow<String?> = _parseError.asStateFlow()
 
+    /** Async handle for the currently running parse, so it can be stopped. */
+    private var currentParseJob: kotlinx.coroutines.Job? = null
+
     val engineState: StateFlow<EngineState> = YoutubeDLManager.engineState
     val engineError: StateFlow<String?> = YoutubeDLManager.engineError
 
@@ -87,13 +90,15 @@ class DownloadViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun parseUrl(url: String) {
+        if (_isParsing.value) return
         val trimmed = url.trim()
         if (trimmed.isBlank()) {
             _parseError.value = "Please enter a valid URL"
             return
         }
 
-        viewModelScope.launch {
+        currentParseJob?.cancel()
+        currentParseJob = viewModelScope.launch {
             _isParsing.value = true
             _parseError.value = null
             _parsedInfo.value = null
@@ -104,15 +109,31 @@ class DownloadViewModel(application: Application) : AndroidViewModel(application
                         _parsedInfo.value = info
                     },
                     onFailure = { error ->
-                        _parseError.value = error.localizedMessage ?: "Failed to parse link"
+                        if (error is YoutubeDLManager.ParseSuspendedException) {
+                            // User stopped the parse — not an error, just go idle.
+                            _parseError.value = null
+                        } else {
+                            _parseError.value = error.localizedMessage ?: "Failed to parse link"
+                        }
                     }
                 )
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
             } catch (e: Exception) {
                 _parseError.value = e.localizedMessage ?: "An unexpected error occurred during parsing"
             } finally {
                 _isParsing.value = false
+                if (currentParseJob?.isActive != true) currentParseJob = null
             }
         }
+    }
+
+    /** Stops the currently running parse; the sheet returns to an idle state. */
+    fun cancelParse() {
+        YoutubeDLManager.cancelParse()
+        // Cancel the coroutine too, so a wait inside engine initialisation or a
+        // suspended state aborts immediately instead of lingering.
+        currentParseJob?.cancel()
     }
 
     fun clearParsedInfo() {

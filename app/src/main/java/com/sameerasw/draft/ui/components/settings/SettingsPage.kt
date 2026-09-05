@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
+import android.view.View
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -197,7 +198,10 @@ fun SettingsPage(
                         if (engineState == EngineState.INITIALIZING) {
                             CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                         } else if (engineState == EngineState.ERROR) {
-                            IconButton(onClick = { viewModel.retryInit() }) {
+                            IconButton(onClick = {
+                                HapticUtil.performUIHaptic(view)
+                                viewModel.retryInit()
+                            }) {
                                 Icon(
                                     painter = painterResource(id = R.drawable.rounded_refresh_24),
                                     contentDescription = "Retry",
@@ -397,7 +401,8 @@ fun SettingsPage(
                         )
                     },
                     trailingContent = {
-                        Switch(
+                        SettingsSwitch(
+                            view = view,
                             checked = forceIpv4,
                             onCheckedChange = { preferences.setForceIpv4(it) }
                         )
@@ -417,7 +422,8 @@ fun SettingsPage(
                         )
                     },
                     trailingContent = {
-                        Switch(
+                        SettingsSwitch(
+                            view = view,
                             checked = cellularDownload,
                             onCheckedChange = { preferences.setCellularDownload(it) }
                         )
@@ -437,7 +443,8 @@ fun SettingsPage(
                         )
                     },
                     trailingContent = {
-                        Switch(
+                        SettingsSwitch(
+                            view = view,
                             checked = proxyEnabled,
                             onCheckedChange = { preferences.setProxyEnabled(it) }
                         )
@@ -523,7 +530,8 @@ fun SettingsPage(
                         )
                     },
                     trailingContent = {
-                        Switch(
+                        SettingsSwitch(
+                            view = view,
                             checked = mergeToMkv,
                             onCheckedChange = { preferences.setMergeToMkv(it) }
                         )
@@ -584,7 +592,8 @@ fun SettingsPage(
                         )
                     },
                     trailingContent = {
-                        Switch(
+                        SettingsSwitch(
+                            view = view,
                             checked = downloadSubtitles,
                             onCheckedChange = { preferences.setDownloadSubtitles(it) }
                         )
@@ -605,7 +614,8 @@ fun SettingsPage(
                             )
                         },
                         trailingContent = {
-                            Switch(
+                            SettingsSwitch(
+                                view = view,
                                 checked = embedSubtitles,
                                 onCheckedChange = { preferences.setEmbedSubtitles(it) }
                             )
@@ -624,7 +634,8 @@ fun SettingsPage(
                             )
                         },
                         trailingContent = {
-                            Switch(
+                            SettingsSwitch(
+                                view = view,
                                 checked = autoSubtitles,
                                 onCheckedChange = { preferences.setAutoSubtitles(it) }
                             )
@@ -683,7 +694,8 @@ fun SettingsPage(
                         )
                     },
                     trailingContent = {
-                        Switch(
+                        SettingsSwitch(
+                            view = view,
                             checked = embedThumbnail,
                             onCheckedChange = { preferences.setEmbedThumbnail(it) }
                         )
@@ -704,7 +716,8 @@ fun SettingsPage(
                             )
                         },
                         trailingContent = {
-                            Switch(
+                            SettingsSwitch(
+                                view = view,
                                 checked = cropArtwork,
                                 onCheckedChange = { preferences.setCropArtwork(it) }
                             )
@@ -725,7 +738,8 @@ fun SettingsPage(
                         )
                     },
                     trailingContent = {
-                        Switch(
+                        SettingsSwitch(
+                            view = view,
                             checked = embedMetadata,
                             onCheckedChange = { preferences.setEmbedMetadata(it) }
                         )
@@ -745,7 +759,8 @@ fun SettingsPage(
                         )
                     },
                     trailingContent = {
-                        Switch(
+                        SettingsSwitch(
+                            view = view,
                             checked = restrictFilenames,
                             onCheckedChange = { preferences.setRestrictFilenames(it) }
                         )
@@ -765,7 +780,8 @@ fun SettingsPage(
                         )
                     },
                     trailingContent = {
-                        Switch(
+                        SettingsSwitch(
+                            view = view,
                             checked = downloadPlaylist,
                             onCheckedChange = { preferences.setDownloadPlaylist(it) }
                         )
@@ -785,7 +801,8 @@ fun SettingsPage(
                         )
                     },
                     trailingContent = {
-                        Switch(
+                        SettingsSwitch(
+                            view = view,
                             checked = downloadArchive,
                             onCheckedChange = { preferences.setDownloadArchive(it) }
                         )
@@ -805,7 +822,8 @@ fun SettingsPage(
                         )
                     },
                     trailingContent = {
-                        Switch(
+                        SettingsSwitch(
+                            view = view,
                             checked = sponsorBlock,
                             onCheckedChange = { preferences.setSponsorBlock(it) }
                         )
@@ -825,7 +843,8 @@ fun SettingsPage(
                         )
                     },
                     trailingContent = {
-                        Switch(
+                        SettingsSwitch(
+                            view = view,
                             checked = privateMode,
                             onCheckedChange = { preferences.setPrivateMode(it) }
                         )
@@ -845,7 +864,8 @@ fun SettingsPage(
                         )
                     },
                     trailingContent = {
-                        Switch(
+                        SettingsSwitch(
+                            view = view,
                             checked = debugLog,
                             onCheckedChange = { preferences.setDebugLog(it) }
                         )
@@ -912,7 +932,8 @@ fun SettingsPage(
                         )
                     },
                     trailingContent = {
-                        Switch(
+                        SettingsSwitch(
+                            view = view,
                             checked = separateAudioVideo,
                             onCheckedChange = { preferences.setSeparateAudioVideo(it) }
                         )
@@ -932,7 +953,8 @@ fun SettingsPage(
                         )
                     },
                     trailingContent = {
-                        Switch(
+                        SettingsSwitch(
+                            view = view,
                             checked = subDirectoryExtractor,
                             onCheckedChange = { preferences.setSubDirectoryExtractor(it) }
                         )
@@ -1050,7 +1072,8 @@ fun SettingsPage(
                             )
                         },
                         trailingContent = {
-                            Switch(
+                            SettingsSwitch(
+                                view = view,
                                 checked = dynamicColor,
                                 onCheckedChange = { preferences.setDynamicColor(it) }
                             )
@@ -1073,7 +1096,8 @@ fun SettingsPage(
                         )
                     },
                     trailingContent = {
-                        Switch(
+                        SettingsSwitch(
+                            view = view,
                             checked = uiBlurEnabled && !isBlurProblematic,
                             onCheckedChange = { preferences.setUiBlurEnabled(it) },
                             enabled = !isBlurProblematic
@@ -1366,6 +1390,28 @@ fun SettingsPage(
             onDismissRequest = { showLanguageDialog = false }
         )
     }
+}
+
+/**
+ * Material Switch that gives haptic (vibration) feedback every time the user
+ * flips it, so every interactive setting option feels the same as the
+ * tap-rows (which already vibrate through Modifier.clickable).
+ */
+@Composable
+private fun SettingsSwitch(
+    view: View,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    enabled: Boolean = true
+) {
+    Switch(
+        checked = checked,
+        onCheckedChange = { newValue ->
+            HapticUtil.performUIHaptic(view)
+            onCheckedChange(newValue)
+        },
+        enabled = enabled
+    )
 }
 
 private fun formatBytes(bytes: Long): String {

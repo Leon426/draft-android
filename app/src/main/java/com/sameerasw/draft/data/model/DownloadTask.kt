@@ -24,7 +24,12 @@ data class DownloadTask(
     val fileSize: String? = null,
     val isAudioOnly: Boolean = false,
     val formatNote: String? = null,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    // --- Live detail metrics (updated while downloading) ---
+    val totalSize: String = "",
+    val downloadedSize: String = "",
+    val elapsedSec: Long = 0L,
+    val stage: String = ""
 )
 
 data class VideoFormatItem(

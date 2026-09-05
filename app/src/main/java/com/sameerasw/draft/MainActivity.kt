@@ -167,6 +167,7 @@ fun MainScreen(viewModel: DownloadViewModel) {
     val isBlurEnabled by viewModel.isBlurEnabled.collectAsState()
 
     val scope = rememberCoroutineScope()
+    val view = LocalView.current
     val pagerState = rememberPagerState(initialPage = 0, pageCount = { 2 })
 
     val exitAlwaysScrollBehavior = FloatingToolbarDefaults.exitAlwaysScrollBehavior(
@@ -226,7 +227,10 @@ fun MainScreen(viewModel: DownloadViewModel) {
                     floatingActionButton = {
                         if (pagerState.currentPage == 0) {
                             FloatingActionButton(
-                                onClick = { showDownloadSheet = true },
+                                onClick = {
+                                    HapticUtil.performUIHaptic(view)
+                                    showDownloadSheet = true
+                                },
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                                 contentColor = MaterialTheme.colorScheme.background,
                                 shape = MaterialTheme.shapes.large,
@@ -239,7 +243,10 @@ fun MainScreen(viewModel: DownloadViewModel) {
                             }
                         } else {
                             FloatingActionButton(
-                                onClick = { showAboutSheet = true },
+                                onClick = {
+                                    HapticUtil.performUIHaptic(view)
+                                    showAboutSheet = true
+                                },
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                                 contentColor = MaterialTheme.colorScheme.background,
                                 shape = MaterialTheme.shapes.large,

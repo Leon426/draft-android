@@ -55,7 +55,11 @@ class DownloadRepository(private val context: Context) {
                         fileSize = obj.optString("fileSize").ifEmpty { null },
                         isAudioOnly = obj.optBoolean("isAudioOnly", false),
                         formatNote = obj.optString("formatNote").ifEmpty { null },
-                        timestamp = obj.optLong("timestamp", System.currentTimeMillis())
+                        timestamp = obj.optLong("timestamp", System.currentTimeMillis()),
+                        totalSize = obj.optString("totalSize"),
+                        downloadedSize = obj.optString("downloadedSize"),
+                        elapsedSec = obj.optLong("elapsedSec", 0L),
+                        stage = obj.optString("stage")
                     )
                 )
             }
@@ -91,6 +95,10 @@ class DownloadRepository(private val context: Context) {
                     put("isAudioOnly", task.isAudioOnly)
                     put("formatNote", task.formatNote ?: "")
                     put("timestamp", task.timestamp)
+                    put("totalSize", task.totalSize)
+                    put("downloadedSize", task.downloadedSize)
+                    put("elapsedSec", task.elapsedSec)
+                    put("stage", task.stage)
                 }
                 array.put(obj)
             }

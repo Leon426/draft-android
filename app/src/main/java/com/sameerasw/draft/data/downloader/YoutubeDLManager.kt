@@ -35,6 +35,9 @@ object YoutubeDLManager {
 
     private const val TAG = "YoutubeDLManager"
 
+    /** Upper bound (ms) for how long a single link parse may run before auto-stop. */
+    private const val parseTimeoutMs = 25_000L
+
     private val initMutex = Mutex()
     private val _engineState = MutableStateFlow(EngineState.NOT_INITIALIZED)
     val engineState: StateFlow<EngineState> = _engineState.asStateFlow()
@@ -95,6 +98,31 @@ object YoutubeDLManager {
         return init(context)
     }
 
+    /**
+     * A dedicated (non-download) process id used to identify an in-flight
+     * "parse/peek" subprocess so it can be cleanly cancelled by the user.
+     */
+    private const val PARSE_PROCESS_PREFIX = "parse"
+
+    private val parseToken = java.util.concurrent.atomic.AtomicLong(0)
+
+    /**
+     * True once [cancelParse] has been requested for the current parse so the
+     * parse loop can bail out cleanly even while a blocking subprocess is ending.
+     */
+    private val _parseCancelled = java.util.concurrent.atomic.AtomicBoolean(false)
+
+    /** Stops the currently running link-parse subprocess (if any). */
+    fun cancelParse() {
+        _parseCancelled.set(true)
+        val token = parseToken.get()
+        if (token != 0L) {
+            cancel("$PARSE_PROCESS_PREFIX$token")
+        }
+    }
+
+    class ParseSuspendedException : Exception("Link parsing was stopped")
+
     suspend fun parseVideoInfo(context: Context, url: String): Result<ParsedVideoInfo> = withContext(Dispatchers.IO) {
         val initResult = ensureInitialized(context)
         if (initResult.isFailure) {
@@ -102,9 +130,23 @@ object YoutubeDLManager {
             return@withContext Result.failure(IllegalStateException("Engine initialization failed: $err"))
         }
 
+        // Mint a fresh token for this parse and clear the cancelled flag.
+        val token = parseToken.incrementAndGet()
+        val processId = "$PARSE_PROCESS_PREFIX$token"
+        _parseCancelled.set(false)
+
         try {
-            withTimeout(35_000L) {
+            val result = withTimeout(parseTimeoutMs) {
                 runCatching {
+                    fun checkActive() {
+                        // The parse subprocess is blocking, so cancellation must be
+                        // signalled through cancelParse() (which destroys the process
+                        // and flips this flag) rather than via coroutine cancellation.
+                        if (_parseCancelled.get()) {
+                            throw ParseSuspendedException()
+                        }
+                    }
+
                     val prefs = PreferencesManager.getInstance(context)
                     val request = YoutubeDLRequest(url).apply {
                         addOption("--dump-single-json")
@@ -124,7 +166,10 @@ object YoutubeDLManager {
                         }
                     }
 
-                    val response = YoutubeDL.getInstance().execute(request)
+                    checkActive()
+                    val response = YoutubeDL.getInstance().execute(request, processId, null)
+                    checkActive()
+
                     val json = JSONObject(response.out)
 
                     val title = json.optString("title", "Untitled Video")
@@ -186,10 +231,33 @@ object YoutubeDLManager {
                     )
                 }
             }
-        } catch (_: TimeoutCancellationException) {
-            Result.failure(IllegalStateException("Link parsing timed out (35s). Please check network/proxy settings or update yt-dlp core in Settings."))
+
+            // Drain the cancelled flag: either we stopped or the parse finished.
+            if (_parseCancelled.get()) {
+                return@withContext Result.failure(ParseSuspendedException())
+            }
+
+            result.onFailure { e ->
+                if (e is ParseSuspendedException) {
+                    Log.i(TAG, "Link parsing cancelled by user.")
+                }
+            }
+            result
+        } catch (e: TimeoutCancellationException) {
+            // A ViewModel job cancellation also lands here once the blocking
+            // subprocess finishes/dies, so check whether the user stopped first.
+            val wasUserCancelled = _parseCancelled.get()
+            cancelParse()
+            if (wasUserCancelled) {
+                Result.failure(ParseSuspendedException())
+            } else {
+                Result.failure(IllegalStateException("Link parsing is taking too long and was stopped. Please check network / proxy settings or update the yt-dlp core, then try again."))
+            }
         } catch (e: Exception) {
             Result.failure(e)
+        } finally {
+            // Make sure the subprocess is gone even on early exit.
+            cancel(processId)
         }
     }
 
@@ -205,24 +273,28 @@ object YoutubeDLManager {
             return@withContext Result.failure(IllegalStateException("Engine initialization failed: $err"))
         }
 
-        runCatching {
-            val prefs = com.sameerasw.draft.data.repository.PreferencesManager.getInstance(context)
-            val targetDir = if (prefs.separateAudioVideo.value) {
-                File(outputDir, if (task.isAudioOnly) "Audio" else "Video").also { if (!it.exists()) it.mkdirs() }
-            } else {
-                if (!outputDir.exists()) outputDir.mkdirs()
-                outputDir
-            }
+        val prefs = com.sameerasw.draft.data.repository.PreferencesManager.getInstance(context)
+        val preferredAria2c = prefs.downloaderType.value == com.sameerasw.draft.data.repository.DownloaderType.ARIA2C
 
-            val subFolder = if (prefs.subDirectoryExtractor.value) "%(extractor)s/%(uploader)s/" else ""
-            val templatePath = if (prefs.separateAudioVideo.value) {
-                val mediaType = if (task.isAudioOnly) "Audio" else "Video"
-                File(outputDir, "$mediaType/$subFolder%(title).100B.%(ext)s").absolutePath
-            } else {
-                File(outputDir, "$subFolder%(title).100B.%(ext)s").absolutePath
-            }
+        // Prepare the destination folder and filename template once, so both the
+        // original attempt and the automatic retry write to the same location.
+        val targetDir = if (prefs.separateAudioVideo.value) {
+            File(outputDir, if (task.isAudioOnly) "Audio" else "Video").also { if (!it.exists()) it.mkdirs() }
+        } else {
+            if (!outputDir.exists()) outputDir.mkdirs()
+            outputDir
+        }
 
-            val request = YoutubeDLRequest(task.url).apply {
+        val subFolder = if (prefs.subDirectoryExtractor.value) "%(extractor)s/%(uploader)s/" else ""
+        val templatePath = if (prefs.separateAudioVideo.value) {
+            val mediaType = if (task.isAudioOnly) "Audio" else "Video"
+            File(outputDir, "$mediaType/$subFolder%(title).100B.%(ext)s").absolutePath
+        } else {
+            File(outputDir, "$subFolder%(title).100B.%(ext)s").absolutePath
+        }
+
+        fun buildRequest(useAria2c: Boolean, hardenedRetry: Boolean): YoutubeDLRequest {
+            return YoutubeDLRequest(task.url).apply {
                 addOption("-o", templatePath)
                 if (!prefs.downloadPlaylist.value) {
                     addOption("--no-playlist")
@@ -242,13 +314,22 @@ object YoutubeDLManager {
                     addOption("--limit-rate", rate)
                 }
 
-                if (prefs.downloaderType.value == com.sameerasw.draft.data.repository.DownloaderType.ARIA2C) {
+                if (useAria2c) {
                     val conns = prefs.concurrentConnections.value
                     addOption("--downloader", "libaria2c.so")
                     addOption("--downloader-args", "aria2c:-x $conns -s $conns -k 1M -j $conns")
                 } else {
                     val conns = prefs.concurrentConnections.value
                     addOption("--concurrent-fragments", conns.toString())
+                }
+
+                // Only the automatic retry is hardened. Some sites (e.g. PornHub)
+                // hand out short-lived HLS/HTTP links that die with HTTP 410, so
+                // give the engine extra network retries on the fresh attempt.
+                if (hardenedRetry) {
+                    addOption("--retries", "10")
+                    addOption("--fragment-retries", "10")
+                    addOption("--retry-sleep", "3")
                 }
 
                 if (prefs.embedThumbnail.value) {
@@ -331,23 +412,84 @@ object YoutubeDLManager {
                     }
                 }
             }
-
-            val response = YoutubeDL.getInstance().execute(request, task.id) { progress, eta, line ->
-                onProgress(progress, eta, line)
-            }
-
-            Log.d(TAG, "Download finished. Out: ${response.out}")
-
-            // Find downloaded file in output directory
-            val searchDir = if (prefs.separateAudioVideo.value) {
-                File(outputDir, if (task.isAudioOnly) "Audio" else "Video")
-            } else outputDir
-            val files = searchDir.walkTopDown().filter { it.isFile && !it.name.endsWith(".part") && !it.name.endsWith(".ytdl") }
-            val downloadedFile = files.maxByOrNull { it.lastModified() }
-                ?: File(searchDir, "${task.title.ifBlank { "video" }}.${if (task.isAudioOnly) prefs.audioFormat.value else "mp4"}")
-
-            downloadedFile
         }
+
+        fun runAttempt(useAria2c: Boolean, hardenedRetry: Boolean): Result<File> {
+            return runCatching {
+                val request = buildRequest(useAria2c, hardenedRetry)
+                val response = YoutubeDL.getInstance().execute(request, task.id) { progress, eta, line ->
+                    onProgress(progress, eta, line)
+                }
+
+                Log.d(TAG, "Download finished. Out: ${response.out}")
+
+                // Find downloaded file in output directory
+                val searchDir = if (prefs.separateAudioVideo.value) {
+                    File(outputDir, if (task.isAudioOnly) "Audio" else "Video")
+                } else outputDir
+                val files = searchDir.walkTopDown().filter { it.isFile && !it.name.endsWith(".part") && !it.name.endsWith(".ytdl") }
+                files.maxByOrNull { it.lastModified() }
+                    ?: File(searchDir, "${task.title.ifBlank { "video" }}.${if (task.isAudioOnly) prefs.audioFormat.value else "mp4"}")
+            }
+        }
+
+        val firstAttempt = runAttempt(preferredAria2c, hardenedRetry = false)
+        if (firstAttempt.isSuccess) return@withContext firstAttempt
+
+        val firstError = firstAttempt.exceptionOrNull()
+        // Never auto-retry when the user cancelled the task.
+        if (firstError is YoutubeDL.CanceledException) return@withContext firstAttempt
+
+        val firstMessage = firstError?.message ?: ""
+        if (!isTransientDownloadFailure(firstMessage)) {
+            return@withContext Result.failure(
+                IllegalStateException("Download failed: ${summarizeFailure(firstMessage)}")
+            )
+        }
+
+        Log.w(TAG, "Download attempt 1 failed with a transient error; retrying with the native downloader. $firstMessage")
+
+        // Automatic recovery: re-extract the page once and retry with yt-dlp's
+        // built-in downloader. HLS manifests/fragments are far more reliable
+        // there than under the external aria2c engine, and the fresh extraction
+        // also re-validates short-lived CDN links (HTTP 410 Gone) that broke the
+        // first attempt.
+        val retryAttempt = runAttempt(useAria2c = false, hardenedRetry = true)
+        if (retryAttempt.isSuccess) return@withContext retryAttempt
+
+        val retryError = retryAttempt.exceptionOrNull()
+        if (retryError is YoutubeDL.CanceledException) return@withContext retryAttempt
+
+        val retryMessage = retryError?.message ?: ""
+        val friendly = StringBuilder("Download failed: ").append(summarizeFailure(firstMessage))
+        if (retryMessage.isNotBlank()) {
+            friendly.append("\nAutomatic retry also failed: ").append(summarizeFailure(retryMessage))
+        }
+        if (preferredAria2c) {
+            friendly.append("\nTip: the aria2c accelerator failed — the Downloader Engine can be switched to Native in Settings.")
+        }
+        friendly.append("\nTip: if this keeps failing, update the yt-dlp core (Settings → Check for yt-dlp Updates) and retry.")
+        Result.failure(IllegalStateException(friendly.toString()))
+    }
+
+    private fun isTransientDownloadFailure(message: String): Boolean {
+        val m = message.lowercase(Locale.ROOT)
+        return listOf(
+            "http error 4", "http error 5", "404", "403", "410", "429", "503",
+            "gone", "m3u8", "manifest", "fragment", "aria2c", "external downloader",
+            "unable to download", "timed out", "timeout", "connection reset",
+            "connection refused", "network is unreachable", "name or service not known",
+            "temporary failure", "server error", "econnreset", "econnrefused",
+            "handshake", "certificate"
+        ).any { m.contains(it) }
+    }
+
+    private fun summarizeFailure(message: String): String {
+        val trimmed = message.trim()
+        if (trimmed.isBlank()) return "unknown error"
+        val lines = trimmed.lineSequence().map { it.trim() }.filter { it.isNotEmpty() }.toList()
+        val meaningful = lines.lastOrNull { !it.startsWith("WARNING:") } ?: lines.lastOrNull() ?: trimmed
+        return meaningful.removePrefix("ERROR:").trim().take(240).ifBlank { "unknown error" }
     }
 
     suspend fun updateYoutubeDL(context: Context, channel: com.sameerasw.draft.data.repository.YtDlpChannel = com.sameerasw.draft.data.repository.YtDlpChannel.STABLE): Result<String> = withContext(Dispatchers.IO) {

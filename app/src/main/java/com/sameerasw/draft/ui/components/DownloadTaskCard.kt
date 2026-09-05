@@ -2,9 +2,15 @@ package com.sameerasw.draft.ui.components
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -35,6 +41,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
@@ -58,8 +66,10 @@ fun DownloadTaskCard(
     val context = LocalContext.current
     val view = LocalView.current
     var showMenu by remember { mutableStateOf(false) }
+    var expanded by remember(task.id) { mutableStateOf(false) }
 
     val isFinished = task.status == TaskStatus.COMPLETED && !task.filePath.isNullOrBlank()
+    val isActive = task.status == TaskStatus.DOWNLOADING || task.status == TaskStatus.QUEUED
 
     fun openFile() {
         task.filePath?.let { path ->
@@ -117,9 +127,17 @@ fun DownloadTaskCard(
                 .background(MaterialTheme.colorScheme.surfaceBright)
                 .combinedClickable(
                     onClick = {
-                        if (isFinished) {
-                            HapticUtil.performUIHaptic(view)
-                            openFile()
+                        when {
+                            isFinished -> {
+                                HapticUtil.performUIHaptic(view)
+                                openFile()
+                            }
+                            isActive -> {
+                                // Tap a running/queued card to expand or collapse
+                                // the detailed progress view.
+                                HapticUtil.performUIHaptic(view)
+                                expanded = !expanded
+                            }
                         }
                     },
                     onLongClick = {
@@ -237,11 +255,79 @@ fun DownloadTaskCard(
                             )
                         }
                     }
+
+                    // ----------------------------------------------------------
+                    // Expanded detailed progress view (tap the active card to
+                    // toggle). Shows live download metrics + source metadata.
+                    // ----------------------------------------------------------
+                    AnimatedVisibility(
+                        visible = expanded && isActive,
+                        enter = fadeIn() + expandVertically(),
+                        exit = fadeOut() + shrinkVertically()
+                    ) {
+                        Column(modifier = Modifier.padding(top = 10.dp)) {
+                            Spacer(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(1.dp)
+                                    .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            if (task.status == TaskStatus.DOWNLOADING) {
+                                // Progress metrics
+                                DetailStatRow(label = "Downloaded", value = if (task.totalSize.isNotBlank()) {
+                                    "${task.downloadedSize.ifBlank { "0" }} / ${task.totalSize}"
+                                } else "—")
+                                DetailStatRow(label = "Speed", value = task.speed.ifBlank { "—" })
+                                DetailStatRow(label = "Time remaining", value = task.eta.ifBlank { "—" })
+                                DetailStatRow(label = "Elapsed", value = formatElapsed(task.elapsedSec))
+                                DetailStatRow(
+                                    label = "Stage",
+                                    value = task.stage.ifBlank { "Downloading…" },
+                                    emphasized = task.stage.isNotBlank()
+                                )
+                            } else {
+                                Text(
+                                    text = "Waiting for an available download slot…",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                            }
+
+                            // Static metadata rows (all states)
+                            DetailStatRow(
+                                label = if (task.isAudioOnly) "Type" else "Video format",
+                                value = formatNoteLabel(task)
+                            )
+                            hostOf(task.url).takeIf { it.isNotBlank() }?.let { host ->
+                                DetailStatRow(label = "Source", value = host)
+                            }
+                            if (task.uploader.isNotBlank()) {
+                                DetailStatRow(label = "Channel", value = task.uploader)
+                            }
+                            if (task.duration.isNotBlank()) {
+                                DetailStatRow(label = "Duration", value = task.duration)
+                            }
+
+                            // Expand hint
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "Tap again to collapse",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
                 }
             },
             trailingContent = {
                 if (task.status == TaskStatus.DOWNLOADING) {
-                    IconButton(onClick = onCancel) {
+                    IconButton(onClick = {
+                        HapticUtil.performUIHaptic(view)
+                        onCancel()
+                    }) {
                         Icon(
                             painter = painterResource(id = R.drawable.rounded_close_24),
                             contentDescription = "Cancel Download",
@@ -250,7 +336,10 @@ fun DownloadTaskCard(
                         )
                     }
                 } else if (isFinished) {
-                    IconButton(onClick = { openFile() }) {
+                    IconButton(onClick = {
+                        HapticUtil.performUIHaptic(view)
+                        openFile()
+                    }) {
                         Icon(
                             painter = painterResource(id = R.drawable.rounded_play_arrow_24),
                             contentDescription = "Play",
@@ -312,4 +401,62 @@ fun DownloadTaskCard(
             )
         }
     }
+}
+
+@Composable
+private fun DetailStatRow(
+    label: String,
+    value: String,
+    emphasized: Boolean = false
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = if (emphasized) FontWeight.Medium else FontWeight.Normal,
+            color = if (emphasized) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.End,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(start = 16.dp)
+        )
+    }
+}
+
+private fun formatNoteLabel(task: DownloadTask): String {
+    val note = task.formatNote
+    return when {
+        task.isAudioOnly -> "Audio only"
+        note.isNullOrBlank() || note == "best" -> "Best quality"
+        note == "bestaudio" -> "Audio only"
+        else -> if (note.all { it.isDigit() || it == 'p' }) "Video $note" else note
+    }
+}
+
+private fun formatElapsed(totalSeconds: Long): String {
+    val sec = totalSeconds.coerceAtLeast(0L)
+    val hours = sec / 3600
+    val minutes = (sec % 3600) / 60
+    val seconds = sec % 60
+    return if (hours > 0) {
+        String.format(java.util.Locale.getDefault(), "%d:%02d:%02d", hours, minutes, seconds)
+    } else {
+        String.format(java.util.Locale.getDefault(), "%02d:%02d", minutes, seconds)
+    }
+}
+
+private fun hostOf(url: String): String {
+    return runCatching { java.net.URI(url).host ?: "" }.getOrDefault("")
 }

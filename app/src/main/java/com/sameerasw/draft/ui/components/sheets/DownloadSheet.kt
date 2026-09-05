@@ -12,6 +12,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -59,6 +60,9 @@ import com.sameerasw.draft.R
 import com.sameerasw.draft.ui.components.containers.RoundedCardContainer
 import com.sameerasw.draft.utils.HapticUtil
 import com.sameerasw.draft.viewmodel.DownloadViewModel
+import kotlinx.coroutines.delay
+
+private const val MS_PER_TICK = 250L
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -79,18 +83,29 @@ fun DownloadSheet(
 
     var showAdvancedFormats by remember { mutableStateOf(false) }
 
-    // Auto-detect clipboard URL upon opening
-    LaunchedEffect(Unit) {
-        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
-        val clipData = clipboard?.primaryClip
-        if (clipData != null && clipData.itemCount > 0) {
-            val text = clipData.getItemAt(0)?.text?.toString()?.trim() ?: ""
-            if (text.startsWith("http://") || text.startsWith("https://")) {
-                inputUrl = text
-                viewModel.parseUrl(text)
+    // Elapsed-seconds readout shown next to the stop button while parsing.
+    // -1 means "not started yet"; 0 is the instant parsing begins.
+    var parseSecs by remember { mutableStateOf(-1) }
+    val parseTick = isParsing
+    LaunchedEffect(parseTick) {
+        parseSecs = if (isParsing) 0 else -1
+        if (isParsing) {
+            val start = System.currentTimeMillis()
+            while (viewModel.isParsing.value) {
+                parseSecs = ((System.currentTimeMillis() - start) / 1000L).toInt()
+                delay(MS_PER_TICK)
             }
+            parseSecs = -1
         }
     }
+
+    fun stopParsing() {
+        viewModel.cancelParse()
+    }
+
+    // NOTE: There is intentionally no auto-paste of the clipboard URL here.
+    // Pasting is user-driven and not automatic to give the user control over what
+    // gets pasted and parsed.
 
     ModalBottomSheet(
         onDismissRequest = {
@@ -179,52 +194,107 @@ fun DownloadSheet(
                             .padding(12.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        OutlinedTextField(
-                            value = inputUrl,
-                            onValueChange = { inputUrl = it },
-                            placeholder = {
-                                Text(
-                                    text = stringResource(R.string.paste_or_enter_url),
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                            },
-                            singleLine = true,
-                            trailingIcon = {
-                                if (inputUrl.isNotBlank()) {
-                                    IconButton(onClick = { inputUrl = "" }) {
-                                        Icon(
-                                            painter = painterResource(id = R.drawable.rounded_close_24),
-                                            contentDescription = "Clear",
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = stringResource(R.string.url_label),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        TextButton(
+                            onClick = {
+                                HapticUtil.performUIHaptic(view)
+                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                                val text = clipboard?.primaryClip?.let { clip ->
+                                    if (clip.itemCount > 0) clip.getItemAt(0)?.text?.toString()?.trim() ?: "" else ""
+                                } ?: ""
+                                if (text.isNotBlank()) {
+                                    inputUrl = text
                                 }
                             },
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                            contentPadding = PaddingValues(horizontal = 4.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.rounded_content_paste_24),
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(stringResource(R.string.paste_clipboard))
+                        }
+                    }
 
+                    OutlinedTextField(
+                        value = inputUrl,
+                        onValueChange = { inputUrl = it },
+                        enabled = !isParsing,
+                        placeholder = {
+                            Text(
+                                text = stringResource(R.string.paste_or_enter_url),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        },
+                        singleLine = true,
+                        trailingIcon = {
+                            if (inputUrl.isNotBlank() && !isParsing) {
+                                IconButton(onClick = { inputUrl = "" }) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.rounded_close_24),
+                                        contentDescription = "Clear",
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    if (isParsing) {
+                        // Parsing is in progress — show a stop control instead of a
+                        // duplicate Parse button, and keep the sheet interactive.
+                        Button(
+                            onClick = {
+                                HapticUtil.performVirtualKeyHaptic(view)
+                                stopParsing()
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer,
+                                contentColor = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.rounded_close_24),
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                if (parseSecs >= 0) "Stop parsing (${parseSecs}s)" else "Stop parsing…"
+                            )
+                        }
+                    } else {
+                        // Idle — show the normal Parse button.
                         Button(
                             onClick = {
                                 HapticUtil.performUIHaptic(view)
                                 viewModel.parseUrl(inputUrl)
                             },
-                            enabled = inputUrl.isNotBlank() && !isParsing,
+                            enabled = inputUrl.isNotBlank(),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            if (isParsing || engineState == com.sameerasw.draft.data.downloader.EngineState.INITIALIZING) {
-                                LoadingIndicator(modifier = Modifier.size(20.dp))
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(if (engineState == com.sameerasw.draft.data.downloader.EngineState.INITIALIZING) "Preparing engine…" else "Parsing link…")
-                            } else {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.rounded_link_24),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(stringResource(R.string.parse_link))
-                            }
+                            Icon(
+                                painter = painterResource(id = R.drawable.rounded_link_24),
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(stringResource(R.string.parse_link))
                         }
+                    }
                     }
                 }
             }

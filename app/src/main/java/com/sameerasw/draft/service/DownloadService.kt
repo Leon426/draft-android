@@ -6,6 +6,7 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.IBinder
+import android.os.SystemClock
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.sameerasw.draft.MainActivity
@@ -83,6 +84,8 @@ class DownloadService : Service() {
             repository.upsertTask(task.copy(status = TaskStatus.DOWNLOADING, progress = 0f))
             val outputDir = repository.getDownloadDirectory()
 
+            val startedAtMs = SystemClock.elapsedRealtime()
+            var lastStage = ""
             val result = YoutubeDLManager.download(
                 context = this@DownloadService,
                 task = task,
@@ -90,11 +93,19 @@ class DownloadService : Service() {
                 onProgress = { progress, etaInSeconds, line ->
                     val speed = extractSpeed(line)
                     val eta = if (etaInSeconds > 0) "${etaInSeconds}s remaining" else ""
+                    val detectedStage = extractStage(line)
+                    if (detectedStage.isNotBlank()) lastStage = detectedStage
+                    val (downloaded, total) = extractSizes(progress, line)
+                    val elapsedSec = (SystemClock.elapsedRealtime() - startedAtMs) / 1000L
                     val updatedTask = task.copy(
                         status = TaskStatus.DOWNLOADING,
                         progress = progress,
                         speed = speed,
-                        eta = eta
+                        eta = eta,
+                        elapsedSec = elapsedSec,
+                        stage = lastStage,
+                        downloadedSize = downloaded,
+                        totalSize = total
                     )
                     repository.upsertTask(updatedTask)
                     updateNotification(task.title, progress.toInt(), "$speed  $eta")
@@ -212,6 +223,40 @@ class DownloadService : Service() {
     private fun extractSpeed(line: String): String {
         val match = Regex("""(\d+(\.\d+)?\s*(KiB|MiB|GiB|B)/s)""").find(line)
         return match?.value ?: ""
+    }
+
+    /** Detects which processing phase the current yt-dlp line belongs to. */
+    private fun extractStage(line: String): String {
+        return when {
+            line.contains("[Merger]") || line.contains("[VideoRemuxer]") -> "Merging…"
+            line.contains("[ExtractAudio]") || line.contains("[AudioConvertor]") -> "Extracting audio…"
+            line.contains("[Metadata]") -> "Writing metadata…"
+            line.contains("[EmbedThumbnail]") || line.contains("[ThumbnailsConvertor]") -> "Embedding thumbnail…"
+            line.contains("[EmbedSubtitle]") || line.contains("[VideoConvertor]") -> "Processing…"
+            line.contains("[ffmpeg]") -> "Processing…"
+            line.contains("[download]") && line.contains("% of") -> "Downloading…"
+            else -> ""
+        }
+    }
+
+    /**
+     * Reads the "of <total>" marker from a yt-dlp progress line and returns
+     * (downloadedHuman, totalHuman). Returns empty strings when the line has no
+     * size information (e.g. aria2c summaries).
+     */
+    private fun extractSizes(progress: Float, line: String): Pair<String, String> {
+        val match = Regex("""\bof\s+([\d.,]+)\s*([KMG]i?B)""").find(line) ?: return "" to ""
+        val raw = match.groupValues[1].replace(",", "").toDoubleOrNull() ?: return "" to ""
+        val unit = match.groupValues[2]
+        val multiplier = when (unit) {
+            "KiB", "KB" -> 1024.0
+            "MiB", "MB" -> 1024.0 * 1024.0
+            "GiB", "GB" -> 1024.0 * 1024.0 * 1024.0
+            else -> 1.0
+        }
+        val totalBytes = raw * multiplier
+        val downloadedBytes = if (progress in 0f..100f) totalBytes * (progress / 100.0) else 0.0
+        return formatFileSize(downloadedBytes.toLong()) to formatFileSize(totalBytes.toLong())
     }
 
     private fun formatFileSize(size: Long): String {

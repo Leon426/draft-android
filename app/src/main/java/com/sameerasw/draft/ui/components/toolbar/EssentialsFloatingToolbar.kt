@@ -41,6 +41,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.sameerasw.draft.R
+import com.sameerasw.draft.utils.HapticUtil
 
 data class ToolbarItem(
     val iconRes: Int,
@@ -89,6 +90,7 @@ fun EssentialsFloatingToolbar(
             if (onBackClick != null) {
                 IconButton(
                     onClick = {
+                        HapticUtil.performUIHaptic(view)
                         onBackClick()
                     },
                     modifier = Modifier.size(48.dp),
@@ -158,6 +160,10 @@ fun EssentialsFloatingToolbar(
                     if (itemWidth > 0.dp || isSelected) {
                         IconButton(
                             onClick = {
+                                // Tactile feedback when the user switches to a new tab.
+                                if (!isSelected) {
+                                    HapticUtil.performUIHaptic(view)
+                                }
                                 item.onClick()
                             },
                             modifier = Modifier

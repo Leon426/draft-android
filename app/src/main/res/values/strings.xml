@@ -5,6 +5,8 @@
     <string name="new_download">New Download</string>
     <string name="paste_or_enter_url">Enter or paste video link…</string>
     <string name="parse_link">Parse</string>
+    <string name="url_label">Video link</string>
+    <string name="paste_clipboard">Paste</string>
     <string name="parsing_link">Parsing link…</string>
     <string name="download_best_video">Download Best Video</string>
     <string name="download_best_audio">Extract Audio</string>
